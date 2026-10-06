@@ -1,0 +1,24 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "schema_version": 1,
+    "graphify_version": "0.9.78"
+  },
+  "nodes": [
+    {
+      "id": "merhaba",
+      "label": "merhaba.py",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "merhaba script",
+      "file_type": "code",
+      "norm_label": "merhaba.py",
+      "source_file": "merhaba.py",
+      "source_location": "L1"
+    }
+  ],
+  "links": [],
+  "hyperedges": [],
+  "built_at_commit": "2cd0050b8d5c96a7e1c603ab5f0a8b7606bc1b66"
+}
