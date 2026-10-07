@@ -1,0 +1,1045 @@
+<title>Demin Su Ünitesi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control-room stack: header + controls, process-train strip (ACF→UF→Pass-1→Pass-2→Katyon/Anyon→Ürün), line decision table, pass trend grid, plant trend grid */
+:root {
+  --bg: #eef2f3;
+  --surface: #fcfcfb;
+  --surface-2: #e4eaec;
+  --ink: #0f1a1e;
+  --ink-2: #46555b;
+  --muted: #7d8a8f;
+  --line: #d3dcdf;
+  --accent: #0b6a80;
+  --accent-ink: #ffffff;
+  --grid: #e1e5e6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
+  --good-ink: #0a6e0a; --warn-ink: #8a5a00; --crit-ink: #b02a2a;
+  --good-wash: #e3f3e3; --warn-wash: #fdf1d6; --crit-wash: #fae3e3;
+  --backdrop: rgba(5, 15, 18, .55);
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1315; --surface: #151c1f; --surface-2: #1d272b;
+    --ink: #eef3f4; --ink-2: #b4c1c5; --muted: #84939a; --line: #2a363a;
+    --accent: #4fb3c9; --accent-ink: #0b1a1e; --grid: #263034;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --good-ink: #3fc93f; --warn-ink: #fab219; --crit-ink: #f07070;
+    --good-wash: #15301a; --warn-wash: #33290f; --crit-wash: #3a1a1a;
+    --backdrop: rgba(0, 0, 0, .65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1315; --surface: #151c1f; --surface-2: #1d272b;
+  --ink: #eef3f4; --ink-2: #b4c1c5; --muted: #84939a; --line: #2a363a;
+  --accent: #4fb3c9; --accent-ink: #0b1a1e; --grid: #263034;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --good-ink: #3fc93f; --warn-ink: #fab219; --crit-ink: #f07070;
+  --good-wash: #15301a; --warn-wash: #33290f; --crit-wash: #3a1a1a;
+  --backdrop: rgba(0, 0, 0, .65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; display: grid; gap: 22px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand { min-width: 0; }
+.brand h1 { font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.brand .sub { color: var(--ink-2); margin-top: 2px; font-size: 13px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: 500 13px var(--f-body); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13px var(--f-body); padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, .btn:focus-within, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file-btn { position: relative; }
+.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.notice { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px dashed var(--line); color: var(--ink-2); font-size: 13px; }
+.notice.sample { border-color: var(--warn); background: var(--warn-wash); color: var(--ink); }
+.notice b { font-weight: 600; }
+
+/* process train */
+.train { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 1500px) { .train { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 900px) { .train { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .train { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.stage::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 10px 10px 0 0; background: var(--line); }
+.stage[data-st="ok"]::before { background: var(--good); }
+.stage[data-st="warn"]::before { background: var(--warn); }
+.stage[data-st="crit"]::before { background: var(--crit); }
+.stage-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 8px; }
+.stage-h .nm { font-family: var(--f-display); font-weight: 700; font-size: 19px; letter-spacing: .02em; }
+.stage-h .ds { color: var(--muted); font-size: 11.5px; display: block; font-family: var(--f-body); font-weight: 400; letter-spacing: 0; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+.pill[data-st="ok"] { background: var(--good-wash); color: var(--good-ink); }
+.pill[data-st="warn"] { background: var(--warn-wash); color: var(--warn-ink); }
+.pill[data-st="crit"] { background: var(--crit-wash); color: var(--crit-ink); }
+.mrow { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-top: 1px solid var(--grid); padding-top: 6px; }
+.mrow .ml { color: var(--ink-2); font-size: 12.5px; }
+.mrow .mv, .lrow .mv { font-family: var(--f-data); font-size: 15px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mrow .mv small { font-family: var(--f-body); color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 3px; }
+.mv[data-st="warn"] { color: var(--warn-ink); }
+.mv[data-st="crit"] { color: var(--crit-ink); }
+.mk { font-size: 10px; margin-right: 4px; }
+.wait { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--grid); padding-top: 6px; }
+.lrow { display: grid; grid-template-columns: 26px minmax(0, 1fr) 54px 58px; gap: 6px; align-items: center; border-top: 1px solid var(--grid); padding-top: 5px; }
+.lrow.lh { border-top: 0; padding-top: 0; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.lrow .mv { font-size: 14px; text-align: right; }
+.lrow .ln { font-family: var(--f-display); font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 4px; }
+.sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.lrow.lh span:nth-child(n+3) { text-align: right; }
+
+/* sections */
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
+.sec-h h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; letter-spacing: .02em; }
+.sec-h .hint { color: var(--muted); font-size: 12.5px; }
+.sec { display: grid; gap: 10px; min-width: 0; }
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; min-width: 0; }
+.card h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.card .unit { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 6px; }
+.card .cdesc { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+.cbox { position: relative; height: 230px; }
+.empty-c { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 13px; text-align: center; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th { position: sticky; top: 0; background: var(--surface-2); color: var(--ink-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+th small { display: block; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+th:first-child, td:first-child, th.why { text-align: left; }
+td { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+td.hat { font-family: var(--f-display); font-weight: 700; font-size: 15px; }
+td.why { text-align: left; white-space: normal; min-width: 240px; font-family: var(--f-body); font-size: 12px; color: var(--ink-2); }
+td.stc { text-align: center; }
+td[data-st="warn"] { background: var(--warn-wash); color: var(--warn-ink); }
+td[data-st="crit"] { background: var(--crit-wash); color: var(--crit-ink); font-weight: 500; }
+tbody tr.pass-break td { border-top: 2px solid var(--line); }
+
+/* dialogs */
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog.wide { width: min(940px, calc(100vw - 32px)); }
+dialog::backdrop { background: var(--backdrop); }
+.dlg { display: grid; gap: 14px; padding: 18px 20px; min-width: 0; }
+.dlg h2 { font-family: var(--f-display); font-size: 22px; margin: 0; }
+.dlg h3 { font-family: var(--f-display); font-size: 17px; font-weight: 600; margin: 4px 0 0; letter-spacing: .02em; }
+.dlg .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.fact { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.fact .fl { font-size: 11.5px; color: var(--muted); }
+.fact .fv { font-family: var(--f-data); font-size: 14px; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--good-wash); color: var(--good-ink); }
+.chip.miss { background: var(--surface-2); color: var(--ink-2); }
+details summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+details .chips { margin-top: 8px; }
+.map-tbl td, .map-tbl th { text-align: left; font-family: var(--f-body); white-space: normal; }
+.map-tbl td.tg { font-family: var(--f-data); white-space: nowrap; }
+.map-tbl select { font: 13px var(--f-body); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 280px; }
+.prog { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.prog > div { height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+.set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
+.set-grid label { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.set-grid label small { color: var(--muted); }
+input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.ref-tbl td, .ref-tbl th { padding: 4px 6px; }
+.ref-tbl input.num { width: 82px; }
+.msg { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
+.msg.err { color: var(--crit-ink); }
+.small { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Demin Su Ünitesi Performans Paneli</h1>
+      <div class="sub">ACF → UF → Pass-1 → Pass-2 → Katyon/Anyon · 2 pass × 4 hat RO · PI 10 dk verisinden hesaplanır</div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Zaman aralığı" id="range">
+        <button type="button" data-r="7">7 gün</button>
+        <button type="button" data-r="30" aria-pressed="true">30 gün</button>
+        <button type="button" data-r="90">90 gün</button>
+        <button type="button" data-r="365">1 yıl</button>
+        <button type="button" data-r="0">Tümü</button>
+      </div>
+      <label class="btn primary file-btn">PI Excel yükle<input type="file" id="file" accept=".xlsx,.xlsm,.xls"></label>
+      <button type="button" class="btn" id="setBtn">Ayarlar</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice">Veriler yükleniyor…</div>
+
+  <section aria-label="Proses hattı durumu">
+    <div class="train" id="train"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Hat karar tablosu</h2><span class="hint" id="decHint"></span></div>
+    <div class="tbl-wrap"><table id="decTbl"></table></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h">
+      <h2>RO hat trendleri</h2>
+      <div class="seg" role="group" aria-label="Pass seçimi" id="passSel">
+        <button type="button" data-p="1" aria-pressed="true">Pass-1</button>
+        <button type="button" data-p="2">Pass-2</button>
+      </div>
+    </div>
+    <div class="charts" id="passCharts"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Tesis trendleri</h2><span class="hint">Günlük ortalamalar · kesikli çizgiler: sarı izleme, kırmızı limit</span></div>
+    <div class="charts" id="plantCharts"></div>
+  </section>
+</div>
+
+<dialog id="upDlg" class="wide">
+  <form method="dialog" class="dlg" id="upForm">
+    <h2>PI Excel önizleme</h2>
+    <div id="upProgBox" hidden><div class="prog"><div id="upProg"></div></div></div>
+    <div class="facts" id="upFacts"></div>
+    <div id="upMatchedBox" hidden>
+      <div class="small" style="margin-bottom:6px">Tanınan tag'ler</div>
+      <div class="chips" id="upGroups"></div>
+      <details id="upDetails"><summary>Tüm eşleşmeleri göster</summary><div class="chips" id="upMatched"></div></details>
+      <details id="upMissBox"><summary id="upMissSum"></summary><div class="chips" id="upMiss"></div></details>
+    </div>
+    <div id="upUnmatchedBox" hidden>
+      <div class="small" style="margin-bottom:6px">Sözlükte olmayan tag'ler: her birini bir parametreye bağlayın ya da yoksayın. Seçim kaydedilir ve sonraki yüklemelerde otomatik tanınır.</div>
+      <div style="overflow-x:auto"><table class="map-tbl" id="upUnmatched"></table></div>
+    </div>
+    <div class="small">Hat KPI'ları yalnız çalışan dilimlerden (Qp ≥ çalışma eşiği) hesaplanır: önce günlük ortalama, sonra KPI. Aynı günün kaydı yeniden yüklenirse üzerine yazılır. Ham 10 dk verisi saklanmaz.</div>
+    <div class="msg" id="upMsg"></div>
+    <div class="row">
+      <button type="button" class="btn" id="upCancel">Vazgeç</button>
+      <button type="button" class="btn primary" id="upSave" disabled>Kaydet</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="setDlg" class="wide">
+  <form method="dialog" class="dlg" id="setForm">
+    <h2>Ayarlar</h2>
+    <div class="small">Kaydedilen ayarlar paneli açan herkes için geçerlidir. Referans ve eşik değişiklikleri KPI'ları hemen yeniden hesaplar; çalışma eşiği değişikliği için veriyi yeniden yükleyin.</div>
+    <h3>Model sabitleri ve limitler</h3>
+    <div class="set-grid" id="setSabit"></div>
+    <h3>Durum eşikleri</h3>
+    <div class="set-grid" id="setEsik"></div>
+    <h3>Hat referansları</h3>
+    <div style="overflow-x:auto"><table class="ref-tbl" id="setRef"></table></div>
+    <h3>Tag eşleştirmeleri</h3>
+    <div id="setTags"></div>
+    <div class="msg" id="setMsg"></div>
+    <div class="row">
+      <button type="button" class="btn" id="setReset">Varsayılan model</button>
+      <button type="button" class="btn" id="setCancel">Vazgeç</button>
+      <button type="button" class="btn primary" id="setSave">Kaydet</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="tags.js"></script>
+<script src="calc.js"></script>
+<script>
+(function () {
+"use strict";
+const T = window.DeminTags, C = window.DeminCalc;
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const tick = () => new Promise(r => setTimeout(r, 0));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const ok = v => v != null && isFinite(v);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+if (!T || !C) {
+  $("notice").textContent = "Hesap modülü yüklenemedi (tags.js / calc.js). Sayfayı yenileyin.";
+  return;
+}
+
+// ---------- biçim ----------
+const fmtN = (v, d = 2) => !ok(v) ? "—" : Number(v).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtS = (v, d = 1) => !ok(v) ? "—" : (v > 0 ? "+" : "") + fmtN(v, d);
+const fmtD = iso => { if (!iso) return "—"; const [y, m, d] = iso.slice(0, 10).split("-"); return d + "." + m + "." + y; };
+const fmtDs = iso => { const [, m, d] = iso.split("-"); return d + "." + m; };
+const fmtStamp = s => s ? fmtD(s.slice(0, 10)) + " " + s.slice(11, 16) : "—";
+const isoToday = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+const ST = {
+  cip: { cls: "crit", txt: "CIP", mk: "■" },
+  izle: { cls: "warn", txt: "İzle", mk: "▲" },
+  ok: { cls: "ok", txt: "OK", mk: "●" },
+  na: { cls: "na", txt: "Veri yok", mk: "○" },
+  wait: { cls: "na", txt: "Tag bekleniyor", mk: "○" }
+};
+const RANK = { na: 0, ok: 1, warn: 2, crit: 3 };
+const SLOT = ["--s1", "--s2", "--s3", "--s4"];
+const PLANT = Object.fromEntries(T.PLANT_PARAMS.map(p => [p.k, p]));
+
+// ---------- durum ----------
+let MODEL = C.mergeModel(null);
+let USERMAP = {};
+let db = null, userNs = null, dl = null, canWrite = null, uid = null;
+const dbLines = new Map(T.LINES.map(l => [l, []]));
+let dbPlant = [];
+let lastUpload = null;
+let dbReady = false;
+let localData = null;      // db yokken bu oturumda yüklenen veri
+let range = 30, passSel = 1;
+let pending = null;
+let suspend = false;
+
+// ---------- örnek veri (yalnız kayıt yokken; açıkça işaretli) ----------
+function makeSample() {
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const n = () => rnd() - 0.5;
+  const days = 75, end = isoToday();
+  const lines = {}, plant = [];
+  const drift = { "P1-A": [0.16, 0.5], "P1-B": [0.06, 0.15], "P1-C": [0.32, 1.0], "P1-D": [0.03, 0.1],
+    "P2-A": [0.08, 0.1], "P2-B": [0.05, 0.08], "P2-C": [0.12, 0.2], "P2-D": [0.04, 0.05] };
+  const S = MODEL.sabit;
+  for (const line of T.LINES) {
+    const pass = +line[1], R = MODEL.ref[line], [npfDrop, dpRise] = drift[line];
+    const arr = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const iso = C.isoAddDays(end, -i), t = (days - 1 - i) / (days - 1);
+      const off = (line === "P1-D" && i % 23 === 3) || (line === "P2-C" && i > 40 && i < 43);
+      const saat = off ? 2 + rnd() * 1.5 : 22 + rnd() * 2;
+      const temp = (pass === 1 ? 19 : 20) + 2 * Math.sin(t * 3) + n() * 0.6;
+      const qp = R.qp * (0.86 + n() * 0.04), qc = R.qc * (0.95 + n() * 0.06);
+      const ecf = pass === 1 ? 700 + n() * 40 : 18 + n() * 3;
+      const f = Math.pow((qp + 2 * qc) / (R.qp + 2 * R.qc), MODEL.sabit.dp_exp);
+      const st1 = R.st1 * (1 + dpRise * t + n() * 0.03) * f, st2 = R.st2 * (1 + dpRise * 0.3 * t + n() * 0.03) * f;
+      const npf = 1 - npfDrop * t + n() * 0.015;
+      const tcf = C.tcf(temp), rec = qp / (qp + qc);
+      const ecp = pass === 1 ? ecf * (R.nsp || 2.5) / 100 * tcf / (qp / R.qp) * (1 + 0.12 * t + n() * 0.04) : 0.6 + 0.3 * t + n() * 0.1;
+      const pifc = ecf * S.ec_tds * Math.log(1 / (1 - rec)) / rec * S.osm, pip = ecp * S.ec_tds * S.osm;
+      const ndp = qp / (R.k * npf * tcf);
+      const pf = ndp + (st1 + st2) / 2 + (pass === 1 ? S.p1_perm : S.p2_perm) + pifc - pip;
+      const pint = pf - st1, pc = pint - st2, cfo = pf + 0.4;
+      arr.push({ tarih: iso, hat: line, pass, n: 144, run_n: Math.round(saat * 6), saat, uretim: qp * saat,
+        avg: { qp, qc, pf, pint, pc, ec_p: ecp, cf_out: cfo, cf_in: cfo + 0.35 + 0.4 * t + n() * 0.05, t: temp, ec_f: ecf } });
+    }
+    lines[line] = arr;
+  }
+  for (let i = days - 1; i >= 0; i--) {
+    const iso = C.isoAddDays(end, -i), t = (days - 1 - i) / (days - 1);
+    const avg = {
+      uf_q_A: 128 + n() * 8, uf_q_B: 131 + n() * 8, uf_q_C: 126 + n() * 8, uf_q_D: 130 + n() * 8,
+      uf_ph: 7.0 + n() * 0.15, uf_ceb_ph: 7.1 + n() * 0.2, uf_ceb_orp: 210 + n() * 40, uf_turb: 1.8 + n() * 1.2,
+      p1_ec_f: 700 + n() * 40, ro_orp: 180 + n() * 50, ro_turb: 0.08 + n() * 0.05 + (i % 17 === 0 ? 0.15 : 0),
+      p1_ph: 6.95 + n() * 0.25, p1_t: 19 + 2 * Math.sin(t * 3), p2_ec_f: 18 + n() * 3, p2_ph: 7.0 + n() * 0.2,
+      p2_t: 20 + 2 * Math.sin(t * 3), prod_ec: 0.55 + 0.25 * t + n() * 0.08, p2_out_t: 20.4 + 2 * Math.sin(t * 3)
+    };
+    const p1 = T.LINES.filter(l => l[1] === "1").reduce((a, l) => a + lines[l][days - 1 - i].uretim, 0);
+    const p2 = T.LINES.filter(l => l[1] === "2").reduce((a, l) => a + lines[l][days - 1 - i].uretim, 0);
+    plant.push({ tarih: iso, n: 144, avg, pct: { ro_orp: { med: avg.ro_orp, p95: avg.ro_orp + 60 + rnd() * 50 } }, uretim: { p1, p2 } });
+  }
+  return { lines, plant };
+}
+let SAMPLE = null;
+
+function source() {
+  let nDb = 0; for (const a of dbLines.values()) nDb += a.length;
+  if (nDb || dbPlant.length) return { kind: "db", lines: Object.fromEntries(dbLines), plant: dbPlant };
+  if (localData) return { kind: "local", lines: localData.lines, plant: localData.plant };
+  SAMPLE = SAMPLE || makeSample();
+  return { kind: "sample", lines: SAMPLE.lines, plant: SAMPLE.plant };
+}
+
+// ---------- veri görünümü ----------
+function view() {
+  const src = source();
+  const all = new Set();
+  for (const l of T.LINES) for (const d of src.lines[l] || []) all.add(d.tarih);
+  for (const p of src.plant) all.add(p.tarih);
+  const dates = [...all].sort();
+  const end = dates[dates.length - 1] || null;
+  const from = end && range ? C.isoAddDays(end, -(range - 1)) : (dates[0] || null);
+  const days = dates.filter(d => d >= from);
+  const kpi = {};      // line → Map(date → {d, k})
+  const summ = {};
+  for (const l of T.LINES) {
+    const docs = (src.lines[l] || []).slice().sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    const m = new Map();
+    for (const d of docs) if (d.tarih >= from) m.set(d.tarih, { d, k: C.dayKPI(d, MODEL) });
+    kpi[l] = m;
+    summ[l] = end ? C.lineSummary(docs, MODEL, end) : C.lineSummary([], MODEL, isoToday());
+  }
+  const plantMap = new Map(src.plant.filter(p => p.tarih >= from).map(p => [p.tarih, p]));
+  return { src, dates, end, from, days, kpi, summ, plantMap };
+}
+
+// ---------- bilgi şeridi ----------
+function renderNotice(v) {
+  const el = $("notice"); const kind = v.src.kind;
+  el.className = "notice" + (kind === "sample" ? " sample" : "");
+  el.textContent = "";
+  const add = html => { const s = document.createElement("span"); s.innerHTML = html; el.appendChild(s); };
+  if (kind === "sample") {
+    add("<b>Örnek veri gösteriliyor, gerçek tesis verisi değildir.</b>");
+    add(dbReady ? "Henüz kayıt yok. Canary/PI DataLink'ten alınan ham 10 dk Excel'ini (\"Pass1-2 Data\" sayfası) yükleyin; KPI'lar panelde hesaplanır." : "Paylaşılan kayıtlar yükleniyor…");
+    return;
+  }
+  add("<b>" + (kind === "db" ? "PI verisinden hesaplanan kayıtlar" : "Bu oturumda yüklenen veri (kaydedilmedi)") + "</b>");
+  add(v.dates.length + " gün · " + fmtD(v.dates[0]) + " – " + fmtD(v.end));
+  add("Görünen aralık: " + v.days.length + " gün");
+  if (lastUpload) add("Son yükleme: " + esc(lastUpload.dosya) + " · veri sonu " + fmtStamp(lastUpload.son) + " · " + fmtStamp((lastUpload.zaman || "").replace("T", " ")));
+  if (kind === "db" && canWrite === false) add("Görüntüleme yetkiniz var; veri yüklemek için Katkıda bulunan izni gerekir.");
+}
+
+// ---------- proses şeridi ----------
+function latestPlant(v, k, from) {
+  const arr = v.src.plant;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const p = arr[i]; if (from && p.tarih < from) break;
+    const x = p.avg && p.avg[k]; if (ok(x)) return { v: x, d: p.tarih, p };
+  }
+  return null;
+}
+function hasGroup(v, g) {
+  const keys = T.PLANT_PARAMS.filter(p => p.g === g).map(p => p.k);
+  return v.src.plant.some(p => p.avg && keys.some(k => ok(p.avg[k])));
+}
+function mrow(label, val, d, unit, st, title) {
+  const mk = st === "warn" || st === "crit" ? '<span class="mk" aria-hidden="true">' + (st === "crit" ? "■" : "▲") + "</span>" : "";
+  return '<div class="mrow"><span class="ml">' + label + '</span><span class="mv" data-st="' + (st || "") + '"' + (title ? ' title="' + esc(title) + '"' : "") + ">" + mk +
+    fmtN(val, d) + (unit ? "<small>" + unit + "</small>" : "") + "</span></div>";
+}
+const hi = (v, lim) => ok(v) && ok(lim) && v >= lim ? "crit" : (ok(v) ? "ok" : "na");
+const band = (v, lo, hi_) => !ok(v) ? "na" : (ok(lo) && v < lo) || (ok(hi_) && v > hi_) ? "warn" : "ok";
+function worst(sts) { let w = "na"; for (const s of sts) if (RANK[s] > RANK[w]) w = s; return w; }
+
+function stage(nm, ds, st, pillTxt, body) {
+  const cls = ST[st] ? ST[st].cls : st;
+  const txt = pillTxt || (ST[st] ? ST[st].txt : "");
+  const mk = { ok: "●", warn: "▲", crit: "■", na: "○" }[cls] || "○";
+  return '<article class="stage" data-st="' + cls + '"><div class="stage-h"><span class="nm">' + nm + '<span class="ds">' + ds + '</span></span><span class="pill" data-st="' + cls + '">' + mk + " " + txt + "</span></div>" + body + "</article>";
+}
+
+function renderTrain(v) {
+  const S = MODEL.sabit, last = v.end;
+  const out = [];
+  // ACF
+  if (hasGroup(v, "acf")) {
+    const rows = [], sts = [];
+    let dp = latestPlant(v, "acf_dp");
+    if (!dp) { const a = latestPlant(v, "acf_p_in"), b = latestPlant(v, "acf_p_out"); if (a && b) dp = { v: a.v - b.v, d: a.d }; }
+    if (dp) { rows.push(mrow("ΔP", dp.v, 2, "bar", "", "Gün: " + fmtD(dp.d))); sts.push("ok"); }
+    for (const [k, l, d] of [["acf_orp", "Çıkış ORP", 0], ["acf_cl", "Çıkış klor", 3], ["acf_q", "Debi", 0]]) {
+      const x = latestPlant(v, k); if (x) { rows.push(mrow(l, x.v, d, PLANT[k].u, "", "Gün: " + fmtD(x.d))); sts.push("ok"); }
+    }
+    out.push(stage("ACF", "Aktif karbon filtre", worst(sts), null, rows.join("")));
+  } else out.push(stage("ACF", "Aktif karbon filtre", "wait", null, '<div class="wait">ACF tag\'leri PI Excel\'ine eklenince yüklemede eşleştirin.</div>'));
+  // UF
+  {
+    const qs = ["A", "B", "C", "D"].map(u => latestPlant(v, "uf_q_" + u, last));
+    const qsum = qs.some(Boolean) ? qs.reduce((a, x) => a + (x ? x.v : 0), 0) : null;
+    const tu = latestPlant(v, "ro_turb"), ph = latestPlant(v, "uf_ph");
+    const sTu = tu ? (tu.v >= S.uf_turb_spec ? "crit" : "ok") : "na";
+    const sPh = ph ? band(ph.v, S.ph_lo, S.ph_hi) : "na";
+    const body = mrow("Çıkış debisi Σ", qsum, 0, "m³/h", "") + mrow("RO giriş bulanıklık", tu && tu.v, 3, "NTU", sTu) + mrow("Çıkış pH", ph && ph.v, 2, "", sPh);
+    out.push(stage("UF", "Ultrafiltrasyon", worst([qsum != null ? "ok" : "na", sTu, sPh]), null, body));
+  }
+  // Pass-1, Pass-2
+  for (const pass of [1, 2]) {
+    const lines = T.LINES.filter(l => +l[1] === pass);
+    const stMap = { cip: "crit", izle: "warn", ok: "ok", na: "na" };
+    const E = MODEL.esik;
+    let rows = '<div class="lrow lh"><span>Hat</span><span>Durum</span><span>NPF %</span><span>St1 dP</span></div>';
+    const sts = [];
+    for (const l of lines) {
+      const s = v.summ[l]; const st = ST[s.st];
+      sts.push(stMap[s.st]);
+      const sNpf = !ok(s.npf) ? "" : s.npf <= E.npf_cip ? "crit" : s.npf <= E.npf_izle ? "warn" : "";
+      const sDp = !ok(s.n_st1_pct) ? "" : s.n_st1_pct >= E.ndp_cip ? "crit" : s.n_st1_pct >= E.ndp_izle ? "warn" : "";
+      rows += '<div class="lrow"><span class="ln"><span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ')"></span>' + l[3] + '</span>' +
+        '<span><span class="pill" data-st="' + st.cls + '">' + st.mk + " " + st.txt + "</span></span>" +
+        '<span class="mv" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + '</span><span class="mv" data-st="' + sDp + '" title="Normalize St1 dP, % ref">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "%" : "—") + "</span></div>";
+    }
+    const pd = last ? v.plantMap.get(last) : null;
+    const prod = pd && pd.uretim ? pd.uretim["p" + pass] : null;
+    rows += mrow("Son gün üretim", prod, 0, "m³", "");
+    const w = worst(sts);
+    const cnt = { crit: sts.filter(x => x === "crit").length, warn: sts.filter(x => x === "warn").length };
+    const pill = w === "crit" ? cnt.crit + " hat CIP" : w === "warn" ? cnt.warn + " hat izle" : null;
+    out.push(stage("Pass-" + pass, (pass === 1 ? "1. pass RO · 4 hat" : "2. pass RO · 4 hat") + " · son 7 gün", w, pill, rows));
+  }
+  // Katyon/Anyon
+  if (hasGroup(v, "iy")) {
+    const rows = [];
+    for (const [k, l, d] of [["iy_ec", "Çıkış iletkenlik", 3], ["iy_sio2", "Silika", 1], ["iy_ph", "pH", 2], ["iy_q", "Debi", 0]]) {
+      const x = latestPlant(v, k); if (x) rows.push(mrow(l, x.v, d, PLANT[k].u, "", "Gün: " + fmtD(x.d)));
+    }
+    out.push(stage("Katyon / Anyon", "İyon değiştirici", "ok", null, rows.join("")));
+  } else out.push(stage("Katyon / Anyon", "İyon değiştirici", "wait", null, '<div class="wait">İletkenlik, silika, pH ve debi tag\'leri eklenince yüklemede eşleştirin.</div>'));
+  // Ürün
+  {
+    const ec = latestPlant(v, "prod_ec"), pd = last ? v.plantMap.get(last) : null;
+    const orp = pd && pd.pct && pd.pct.ro_orp ? pd.pct.ro_orp.p95 : null;
+    const sEc = ec ? hi(ec.v, S.prod_ec_max) : "na", sOrp = ok(orp) ? hi(orp, S.orp_max) : "na";
+    const body = mrow("Nihai ürün EC", ec && ec.v, 3, "µS/cm", sEc) + mrow("RO giriş ORP P95", orp, 0, "mV", sOrp) + mrow("Son gün üretim", pd && pd.uretim ? pd.uretim.p2 : null, 0, "m³", "");
+    out.push(stage("Ürün", "Demin su", worst([sEc, sOrp]), null, body));
+  }
+  $("train").innerHTML = out.join("");
+}
+
+// ---------- karar tablosu ----------
+function renderDecision(v) {
+  const S = MODEL.sabit, E = MODEL.esik;
+  const lvl = (val, cipLim, izleLim, dir) => {
+    if (!ok(val)) return "";
+    if (dir === "lo") return ok(cipLim) && val <= cipLim ? "crit" : ok(izleLim) && val <= izleLim ? "warn" : "";
+    return ok(cipLim) && val >= cipLim ? "crit" : ok(izleLim) && val >= izleLim ? "warn" : "";
+  };
+  const cell = (val, d, st, suffix) => {
+    const mk = st === "warn" || st === "crit" ? '<span class="mk" aria-label="' + (st === "crit" ? "Limit" : "İzle") + '">' + (st === "crit" ? "■" : "▲") + "</span>" : "";
+    return '<td data-st="' + (st || "") + '">' + mk + (suffix === "s" ? fmtS(val, d) : fmtN(val, d)) + "</td>";
+  };
+  const head = "<thead><tr><th>Hat</th><th>Çalışma<small>h/gün</small></th><th>Qp<small>m³/h</small></th><th>Recovery<small>%</small></th>" +
+    "<th>St1 dP<small>bar, gerçek</small></th><th>St1 norm<small>% ref</small></th><th>St2 norm<small>% ref</small></th><th>NPF<small>% ref</small></th>" +
+    "<th>NPF eğim<small>%/30 gün</small></th><th>St1 dP eğim<small>bar/30 gün</small></th><th>NSP<small>% ref</small></th><th>P2 permeat EC<small>µS/cm</small></th>" +
+    "<th>Durum</th><th class='why'>Gerekçe</th></tr></thead>";
+  let body = "";
+  for (const l of T.LINES) {
+    const s = v.summ[l], pass = +l[1], st = ST[s.st];
+    const recLo = pass === 1 ? S.rec_p1_lo : S.rec_p2_lo, recHi = pass === 1 ? S.rec_p1_hi : S.rec_p2_hi;
+    const sRec = ok(s.rec) && (s.rec < recLo || s.rec > recHi) ? "warn" : "";
+    const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde ≥ " + fmtN(S.min_run_h, 0) + " h çalışılan gün yok" : "Eşik aşımı yok");
+    body += '<tr class="' + (l === "P2-A" ? "pass-break" : "") + '"><td class="hat"><span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ');margin-right:6px"></span>' + l + "</td>" +
+      cell(s.saat, 1) + cell(s.qp, 1) + cell(s.rec, 1, sRec) + cell(s.st1, 2, hi(s.st1, S.vessel_dp_max) === "crit" ? "crit" : "") +
+      cell(s.n_st1_pct, 0, lvl(s.n_st1_pct, E.ndp_cip, E.ndp_izle)) + cell(s.n_st2_pct, 0, lvl(s.n_st2_pct, E.ndp_cip, E.ndp_izle)) +
+      cell(s.npf, 1, lvl(s.npf, E.npf_cip, E.npf_izle, "lo")) + cell(s.npf_slope, 1, "", "s") + cell(s.st1_slope, 2, "", "s") +
+      cell(s.nsp_pct, 0, lvl(s.nsp_pct, E.nsp_cip, E.nsp_izle)) +
+      (pass === 2 ? cell(s.ec_p, 2, ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : "") : "<td>—</td>") +
+      '<td class="stc"><span class="pill" data-st="' + st.cls + '">' + st.mk + " " + st.txt + "</span></td>" +
+      '<td class="why">' + esc(why) + "</td></tr>";
+  }
+  $("decTbl").innerHTML = head + "<tbody>" + body + "</tbody>";
+  $("decHint").textContent = v.end ? "Son 7 gün ortalaması (" + fmtD(C.isoAddDays(v.end, -6)) + " – " + fmtD(v.end) + ") · eğimler son 30 gün · KPI'lar ≥ " + fmtN(S.min_run_h, 0) + " h çalışılan günlerden" : "";
+}
+
+// ---------- grafikler ----------
+let charts = {};
+function chartShells(rootId, defs) {
+  const root = $(rootId);
+  const sig = defs.map(d => d.id).join("|");
+  if (root.dataset.sig === sig) return;
+  for (const id in charts) { const el = document.getElementById(id); if (!el || root.contains(el)) { charts[id].destroy(); delete charts[id]; } }
+  root.dataset.sig = sig;
+  root.innerHTML = defs.map(d => '<div class="card"><h3>' + d.t + (d.u ? '<span class="unit">' + d.u + "</span>" : "") + "</h3>" +
+    '<div class="cdesc">' + (d.d || "&nbsp;") + '</div><div class="cbox" id="box_' + d.id + '"><canvas id="' + d.id + '" role="img" aria-label="' + esc(d.t) + ' trend grafiği"></canvas></div></div>').join("");
+}
+function drawChart(def, labels, dates, series, lims) {
+  const el = $(def.id); if (!el) return;
+  if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
+  const box = $("box_" + def.id);
+  const hasData = series.some(s => s.data.some(ok));
+  let empty = box.querySelector(".empty-c");
+  if (!hasData) {
+    el.hidden = true;
+    if (!empty) { empty = document.createElement("div"); empty.className = "empty-c"; box.appendChild(empty); }
+    empty.textContent = def.empty || "Bu aralıkta veri yok.";
+    return;
+  }
+  el.hidden = false; if (empty) empty.remove();
+  if (!window.Chart) return;
+  const muted = css("--muted"), grid = css("--grid"), surf = css("--surface"), ink2 = css("--ink-2");
+  const n = labels.length;
+  const ds = series.map(s => ({
+    label: s.label, data: s.data.map(x => ok(x) ? +(+x).toFixed(4) : null),
+    borderColor: s.color, backgroundColor: s.color, borderWidth: 2, tension: 0.2, spanGaps: false,
+    pointRadius: n > 45 ? 0 : 2.5, pointHoverRadius: 5, pointBackgroundColor: s.color, pointBorderColor: surf, pointBorderWidth: 1.5,
+    borderRadius: def.bar ? 4 : 0, maxBarThickness: 16
+  }));
+  for (const L of lims || []) {
+    if (!ok(L.v)) continue;
+    ds.push({ label: L.label, data: labels.map(() => L.v), borderColor: L.kind === "crit" ? css("--crit") : css("--warn"), borderWidth: 1.25, borderDash: [5, 4],
+      pointRadius: 0, pointHoverRadius: 0, fill: false, _limit: true, type: "line" });
+  }
+  charts[def.id] = new Chart(el, {
+    type: def.bar ? "bar" : "line",
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: { grid: { display: false }, border: { color: grid }, ticks: { color: muted, maxRotation: 0, autoSkipPadding: 14, font: { family: "IBM Plex Mono", size: 10.5 } } },
+        y: { grid: { color: grid }, border: { display: false }, beginAtZero: !!def.bar, ticks: { color: muted, font: { family: "IBM Plex Mono", size: 10.5 }, callback: x => Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 }) } }
+      },
+      plugins: {
+        legend: { display: series.length > 1, align: "start", labels: { color: ink2, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", font: { family: "IBM Plex Sans", size: 12 },
+          filter: it => !ds[it.datasetIndex]._limit } },
+        tooltip: {
+          filter: it => !it.dataset._limit && it.raw != null,
+          backgroundColor: surf, titleColor: css("--ink"), bodyColor: ink2, borderColor: css("--line"), borderWidth: 1, padding: 10,
+          titleFont: { family: "IBM Plex Sans", weight: "600" }, bodyFont: { family: "IBM Plex Mono", size: 12 },
+          callbacks: {
+            title: items => items.length ? fmtD(dates[items[0].dataIndex]) : "",
+            label: it => " " + it.dataset.label + ": " + Number(it.raw).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) + (def.u ? " " + def.u : "")
+          }
+        }
+      }
+    }
+  });
+}
+
+function passDefs(pass) {
+  const S = MODEL.sabit, E = MODEL.esik;
+  const lo = pass === 1 ? S.rec_p1_lo : S.rec_p2_lo, hiR = pass === 1 ? S.rec_p1_hi : S.rec_p2_hi;
+  const p = "pc" + pass + "_";
+  const defs = [
+    { id: p + "npf", t: "NPF", u: "% ref", d: "Normalize permeat debisi K / K_ref · TCF ve NDP düzeltmeli", f: (k) => k.npf, dig: 1,
+      lims: [{ v: E.npf_izle, kind: "warn", label: "İzle" }, { v: E.npf_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "nst1", t: "Normalize St1 dP", u: "% ref", d: "Referans debiye (Qp + 2Qc) normalize 1. kademe fark basıncı", f: k => k.n_st1_pct, dig: 0,
+      lims: [{ v: E.ndp_izle, kind: "warn", label: "İzle" }, { v: E.ndp_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "nst2", t: "Normalize St2 dP", u: "% ref", d: "Referans debiye normalize 2. kademe fark basıncı", f: k => k.n_st2_pct, dig: 0,
+      lims: [{ v: E.ndp_izle, kind: "warn", label: "İzle" }, { v: E.ndp_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "st1", t: "Gerçek St1 dP", u: "bar", d: "Pf − Pint · kırmızı: vessel limiti", f: k => k.st1, lims: [{ v: S.vessel_dp_max, kind: "crit", label: "Vessel limiti" }] },
+    { id: p + "rec", t: "Recovery", u: "%", d: "Qp / (Qp + Qc) · sarı: işletme bandı", f: k => k.rec, dig: 1,
+      lims: [{ v: lo, kind: "warn", label: "Bant alt" }, { v: hiR, kind: "warn", label: "Bant üst" }] },
+    { id: p + "qp", t: "Permeat debisi Qp", u: "m³/h", d: "Çalışan dilimlerin günlük ortalaması", f: (k, d) => d.avg.qp, dig: 1 },
+    { id: p + "cf", t: "Kartuş filtre dP", u: "bar", d: "Kartuş giriş − çıkış basıncı", f: k => k.cf_dp, lims: [{ v: S.cf_dp_max, kind: "crit", label: "Limit" }] }
+  ];
+  if (pass === 1) defs.push({ id: p + "nsp", t: "NSP", u: "% ref", d: "Normalize tuz geçişi (EC_p/EC_f · Qp/Qp_ref / TCF) / NSP_ref", f: k => k.nsp_pct, dig: 0,
+    lims: [{ v: E.nsp_izle, kind: "warn", label: "İzle" }, { v: E.nsp_cip, kind: "crit", label: "CIP" }] });
+  else defs.push({ id: p + "ecp", t: "Pass-2 permeat EC", u: "µS/cm", d: "Hat bazında ham permeat iletkenliği (NSP_ref tanımlı değil)", f: (k, d) => d.avg.ec_p, dig: 3,
+    lims: [{ v: S.p2_ec_max, kind: "crit", label: "Limit" }] });
+  return defs;
+}
+function renderPassCharts(v) {
+  const defs = passDefs(passSel);
+  chartShells("passCharts", defs);
+  const labels = v.days.map(fmtDs);
+  const lines = T.LINES.filter(l => +l[1] === passSel);
+  for (const def of defs) {
+    const series = lines.map((l, i) => ({
+      label: l, color: css(SLOT[i]),
+      data: v.days.map(d => { const r = v.kpi[l].get(d); return r && r.k ? def.f(r.k, r.d) : null; })
+    }));
+    def.empty = "Bu aralıkta ≥ " + fmtN(MODEL.sabit.min_run_h, 0) + " h çalışılan gün yok.";
+    drawChart(def, labels, v.days, series, def.lims);
+  }
+}
+
+function plantDefs(v) {
+  const S = MODEL.sabit;
+  const a = k => p => p.avg ? p.avg[k] : null;
+  const defs = [
+    { id: "pl_prodec", t: "Nihai ürün EC", u: "µS/cm", d: "AI-91754 · Pass-2 çıkışı", dig: 3, s: [["Ürün EC", a("prod_ec")]], lims: [{ v: S.prod_ec_max, kind: "crit", label: "Limit" }] },
+    { id: "pl_orp", t: "RO giriş ORP", u: "mV", d: "AI-91811 · günlük medyan ve P95", dig: 0,
+      s: [["Medyan", p => p.pct && p.pct.ro_orp ? p.pct.ro_orp.med : null], ["P95", p => p.pct && p.pct.ro_orp ? p.pct.ro_orp.p95 : null]],
+      lims: [{ v: S.orp_max, kind: "crit", label: "Limit" }] },
+    { id: "pl_ph", t: "pH", u: "", d: "Pass-1 ve Pass-2 girişi, UF çıkışı · sarı: işletme bandı", s: [["Pass-1 giriş", a("p1_ph")], ["Pass-2 giriş", a("p2_ph")], ["UF çıkış", a("uf_ph")]],
+      lims: [{ v: S.ph_lo, kind: "warn", label: "Bant alt" }, { v: S.ph_hi, kind: "warn", label: "Bant üst" }] },
+    { id: "pl_t", t: "Sıcaklık", u: "°C", d: "TI-91800, TI-91801, TI-73052 (Pass-2 çıkış, teyit bekliyor)", dig: 1, s: [["Pass-1 giriş", a("p1_t")], ["Pass-2 giriş", a("p2_t")], ["Pass-2 çıkış", a("p2_out_t")]] },
+    { id: "pl_ufq", t: "UF çıkış debileri", u: "m³/h", d: "FT-91770 A–D", dig: 1, s: ["A", "B", "C", "D"].map(u => ["UF-" + u, a("uf_q_" + u)]) },
+    { id: "pl_turb", t: "Bulanıklık", u: "NTU", d: "UF girişi ve RO girişi (UF filtratı) · kırmızı: UF spesifikasyonu", dig: 3, s: [["UF giriş", a("uf_turb")], ["RO giriş", a("ro_turb")]],
+      lims: [{ v: S.uf_turb_spec, kind: "crit", label: "UF spek." }] },
+    { id: "pl_ecf", t: "Besleme iletkenliği", u: "µS/cm", d: "AI-91750 (Pass-1) · AI-91752 (Pass-2)", dig: 1, s: [["Pass-1 besleme", a("p1_ec_f")], ["Pass-2 besleme", a("p2_ec_f")]] },
+    { id: "pl_prod", t: "Pass üretimi", u: "m³/gün", d: "Çalışan dilimlerde Σ Qp × aralık", dig: 0, bar: true,
+      s: [["Pass-1", p => p.uretim ? p.uretim.p1 : null], ["Pass-2", p => p.uretim ? p.uretim.p2 : null]] }
+  ];
+  const has = keys => v.src.plant.some(p => p.avg && keys.some(k => ok(p.avg[k])));
+  if (has(["acf_dp", "acf_p_in"])) defs.push({ id: "pl_acfdp", t: "ACF fark basınç", u: "bar", d: "ACF ΔP ya da giriş − çıkış basıncı", s: [["ACF ΔP", p => p.avg && ok(p.avg.acf_dp) ? p.avg.acf_dp : (p.avg && ok(p.avg.acf_p_in) && ok(p.avg.acf_p_out) ? p.avg.acf_p_in - p.avg.acf_p_out : null)]] });
+  if (has(["acf_orp", "acf_cl"])) defs.push({ id: "pl_acfcl", t: "ACF çıkışı", u: "", d: "Çıkış ORP (mV) / serbest klor (mg/L)", s: [["ORP mV", a("acf_orp")], ["Klor mg/L", a("acf_cl")]].filter(x => has([x[0].startsWith("ORP") ? "acf_orp" : "acf_cl"])) });
+  if (has(["acf_q"])) defs.push({ id: "pl_acfq", t: "ACF debisi", u: "m³/h", d: "", s: [["ACF debi", a("acf_q")]] });
+  if (has(["iy_ec"])) defs.push({ id: "pl_iyec", t: "Katyon/Anyon çıkış iletkenlik", u: "µS/cm", d: "", dig: 3, s: [["İletkenlik", a("iy_ec")]] });
+  if (has(["iy_sio2"])) defs.push({ id: "pl_iysi", t: "Katyon/Anyon çıkış silika", u: "ppb", d: "", dig: 1, s: [["Silika", a("iy_sio2")]] });
+  if (has(["iy_ph", "iy_q"])) defs.push({ id: "pl_iyx", t: "Katyon/Anyon pH ve debi", u: "", d: "", s: [["pH", a("iy_ph")], ["Debi m³/h", a("iy_q")]].filter(x => has([x[0] === "pH" ? "iy_ph" : "iy_q"])) });
+  return defs;
+}
+function renderPlantCharts(v) {
+  const defs = plantDefs(v);
+  chartShells("plantCharts", defs);
+  const labels = v.days.map(fmtDs);
+  for (const def of defs) {
+    const series = def.s.map(([label, f], i) => ({ label, color: css(SLOT[i]), data: v.days.map(d => { const p = v.plantMap.get(d); return p ? f(p) : null; }) }));
+    drawChart(def, labels, v.days, series, def.lims);
+  }
+}
+
+let renderTimer = null;
+function render() {
+  const v = view();
+  renderNotice(v); renderTrain(v); renderDecision(v); renderPassCharts(v); renderPlantCharts(v);
+}
+function scheduleRender() {
+  if (suspend) return;
+  clearTimeout(renderTimer); renderTimer = setTimeout(render, 250);
+}
+
+// ---------- kontroller ----------
+function bindSeg(id, attr, set, store) {
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    set(+b.dataset[attr]);
+    for (const x of $(id).querySelectorAll("button")) x.setAttribute("aria-pressed", x === b ? "true" : "false");
+    try { localStorage.setItem(store, b.dataset[attr]); } catch (_) {}
+    render();
+  });
+  try {
+    const r = localStorage.getItem(store);
+    if (r != null) { set(+r); for (const x of $(id).querySelectorAll("button")) x.setAttribute("aria-pressed", x.dataset[attr] === r ? "true" : "false"); }
+  } catch (_) {}
+}
+bindSeg("range", "r", x => range = x, "demin_range");
+bindSeg("passSel", "p", x => passSel = x, "demin_pass");
+
+// ---------- PI Excel okuma ----------
+function sheetRows(ws) {
+  if (!ws) return [];
+  if (ws["!data"]) return ws["!data"];
+  if (Array.isArray(ws)) return ws;
+  return XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true });
+}
+async function readWorkbook(file, onMsg) {
+  if (!window.XLSX) throw new Error("Excel okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+  onMsg("Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)", 0.05);
+  await tick();
+  const buf = await file.arrayBuffer();
+  await tick();
+  const names = XLSX.read(buf, { type: "array", bookSheets: true }).SheetNames;
+  const order = names.slice().sort((a, b) => score(b) - score(a));
+  function score(n) { return /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0; }
+  let lastErr = null;
+  for (const name of order.slice(0, 6)) {
+    onMsg("“" + name + "” sayfası ayrıştırılıyor…", 0.15);
+    await tick();
+    const wb = XLSX.read(buf, { type: "array", dense: true, sheets: [name], cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false });
+    const rows = sheetRows(wb.Sheets[name]);
+    try { const header = C.detectHeader(rows); return { sheet: name, rows, header }; }
+    catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+}
+
+function setProg(frac, text) {
+  $("upProgBox").hidden = frac == null;
+  if (frac != null) $("upProg").style.width = Math.round(Math.max(0, Math.min(1, frac)) * 100) + "%";
+  if (text != null) { $("upMsg").className = "msg"; $("upMsg").textContent = text; }
+}
+function effectiveMap(p) { return Object.assign({}, USERMAP, p.choice); }
+
+let aggToken = 0;
+async function runAggregate(p) {
+  const my = ++aggToken;
+  const cols = C.resolveColumns(p.header.cols, effectiveMap(p));
+  const agg = C.makeAggregator(cols, MODEL);
+  const rows = p.rows, start = p.header.dataStart, N = rows.length, CH = 4000;
+  for (let r = start; r < N; r += CH) {
+    const end = Math.min(N, r + CH);
+    for (let i = r; i < end; i++) { const row = rows[i]; if (row) agg.add(row); }
+    setProg(0.2 + 0.8 * (end - start) / Math.max(1, N - start), "Günlük ortalamalar hesaplanıyor… " + Math.round((end - start) / Math.max(1, N - start) * 100) + "%");
+    await tick();
+    if (my !== aggToken) return null;
+  }
+  p.cols = cols; p.out = agg.finish();
+  return p;
+}
+
+$("file").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  pending = null;
+  $("upFacts").innerHTML = ""; $("upMatchedBox").hidden = true; $("upUnmatchedBox").hidden = true;
+  $("upSave").disabled = true; $("upSave").textContent = "Kaydet"; $("upCancel").disabled = false;
+  setProg(0, "Dosya okunuyor…");
+  if (!$("upDlg").open) $("upDlg").showModal();
+  try {
+    const wb = await readWorkbook(f, (m, fr) => setProg(fr, m));
+    pending = { fileName: f.name, sheet: wb.sheet, rows: wb.rows, header: wb.header, choice: {} };
+    const known = T.builtinIndex();
+    for (const c of pending.header.cols) if (!known[c.norm] && !USERMAP[c.norm]) pending.choice[c.norm] = "ignore";
+    if (!(await runAggregate(pending))) return;
+    showUpload();
+  } catch (err) {
+    pending = null;
+    setProg(null);
+    $("upMsg").textContent = (err && err.message) || "Dosya okunamadı."; $("upMsg").className = "msg err";
+  }
+});
+
+function targetOptions(selected, used) {
+  const tg = T.targets();
+  const groups = [["ACF (tag bekleyen)", k => tg[k].kind === "plant" && tg[k].g === "acf"], ["Katyon/Anyon (tag bekleyen)", k => tg[k].kind === "plant" && tg[k].g === "iy"],
+    ["Tesis parametreleri", k => tg[k].kind === "plant" && tg[k].g !== "acf" && tg[k].g !== "iy"]];
+  for (const l of T.LINES) groups.push([l + " hattı", k => tg[k].kind === "line" && tg[k].line === l]);
+  let h = '<option value="ignore"' + (selected === "ignore" || !selected ? " selected" : "") + ">Yoksay</option>";
+  for (const [g, fn] of groups) {
+    h += '<optgroup label="' + esc(g) + '">';
+    for (const k in tg) if (fn(k)) {
+      const dis = used.has(k) && k !== selected;
+      h += '<option value="' + k + '"' + (k === selected ? " selected" : "") + (dis ? " disabled" : "") + ">" + esc(tg[k].l) + (tg[k].u ? " (" + esc(tg[k].u) + ")" : "") + "</option>";
+    }
+    h += "</optgroup>";
+  }
+  return h;
+}
+
+function showUpload() {
+  const p = pending, o = p.out;
+  setProg(null);
+  const facts = [["Dosya", p.fileName], ["Sayfa", p.sheet], ["Zaman aralığı", fmtStamp(o.firstStamp) + " – " + fmtStamp(o.lastStamp)],
+    ["Satır (dilim)", o.rows.toLocaleString("tr-TR")], ["Adım", fmtN(o.stepMin, 0) + " dk"], ["Gün", o.plantDays.length],
+    ["Kısmi gün", o.partialDays.length ? o.partialDays.map(fmtD).join(", ") : "yok"], ["Tag satırı", (p.header.mode === "path" ? "PI yolundan, satır " : "Satır ") + (p.header.tagRow + 1)]];
+  $("upFacts").innerHTML = facts.map(([l, v]) => '<div class="fact"><div class="fl">' + esc(l) + '</div><div class="fv">' + esc(v) + "</div></div>").join("");
+  const tg = T.targets();
+  const matched = p.cols.filter(c => c.key);
+  const byG = {};
+  for (const c of matched) { const g = T.GROUPS[tg[c.key].g] || tg[c.key].g; byG[g] = (byG[g] || 0) + 1; }
+  $("upMatchedBox").hidden = false;
+  $("upGroups").innerHTML = Object.entries(byG).map(([g, n]) => '<span class="chip">' + esc(g) + ": " + n + " tag</span>").join("") || '<span class="chip miss">Tanınan tag yok</span>';
+  $("upMatched").innerHTML = matched.map(c => '<span class="chip">' + esc(c.tag) + " → " + esc(tg[c.key].l) + "</span>").join("");
+  const have = new Set(matched.map(c => c.key));
+  const miss = Object.keys(tg).filter(k => !have.has(k) && !(tg[k].kind === "plant" && (tg[k].g === "acf" || tg[k].g === "iy")));
+  $("upMissBox").hidden = !miss.length;
+  $("upMissSum").textContent = "Dosyada bulunmayan sözlük parametreleri: " + miss.length;
+  $("upMiss").innerHTML = miss.map(k => '<span class="chip miss">' + esc(tg[k].l) + "</span>").join("");
+
+  const unknown = p.header.cols.filter(c => c.norm in p.choice);
+  $("upUnmatchedBox").hidden = !unknown.length;
+  const used = new Set(p.cols.filter(c => c.key).map(c => c.key));
+  $("upUnmatched").innerHTML = unknown.length ? "<thead><tr><th>Tag</th><th>Açıklama / grup</th><th>Parametre</th></tr></thead><tbody>" + unknown.map(c =>
+    '<tr><td class="tg">' + esc(c.tag) + "</td><td>" + esc([c.desc, c.group].filter(Boolean).join(" · ")) + '</td><td><select id="map_' + esc(c.norm) + '" data-norm="' + esc(c.norm) + '">' +
+    targetOptions(p.choice[c.norm], used) + "</select></td></tr>").join("") + "</tbody>" : "";
+  for (const sel of $("upUnmatched").querySelectorAll("select")) {
+    sel.addEventListener("change", async () => {
+      p.choice[sel.dataset.norm] = sel.value;
+      $("upSave").disabled = true;
+      if (await runAggregate(p)) showUpload();
+    });
+  }
+  const nLine = o.lineDays.length, nPlant = o.plantDays.length;
+  const willStore = !!db && canWrite !== false;
+  $("upSave").textContent = willStore ? "Kaydet (" + nPlant + " gün, " + (nLine + nPlant) + " kayıt)" : "Bu oturumda göster";
+  $("upSave").disabled = !nPlant;
+  $("upMsg").className = nPlant ? "msg" : "msg err";
+  $("upMsg").textContent = nPlant ? (willStore ? "" : (db ? "Kayıt yetkiniz yok; veri yalnız bu oturumda gösterilir." : "Paylaşılan kayıt kullanılamıyor; veri yalnız bu oturumda gösterilir.")) : "Geçerli zaman damgalı satır bulunamadı.";
+}
+
+$("upCancel").addEventListener("click", () => { aggToken++; pending = null; $("upDlg").close(); });
+$("upDlg").addEventListener("close", () => { if (pending && !$("upSave").dataset.busy) { aggToken++; pending = null; } });
+
+const r4 = x => ok(x) ? Math.round(x * 1e4) / 1e4 : null;
+function kpiRounded(doc) {
+  const k = C.dayKPI(doc, MODEL); if (!k) return null;
+  const o = {}; for (const f in k) o[f] = r4(k[f]); return o;
+}
+function sameBody(a, b) {
+  if (!a || !b) return false;
+  return JSON.stringify([a.n, a.saat, a.uretim, a.avg, a.pct]) === JSON.stringify([b.n, b.saat, b.uretim, b.avg, b.pct]);
+}
+
+$("upSave").addEventListener("click", async () => {
+  const p = pending; if (!p || !p.out) return;
+  const o = p.out;
+  const btn = $("upSave"), msg = $("upMsg");
+  // Eşleştirme kararları
+  const newMap = Object.assign({}, USERMAP, p.choice);
+  if (!db || canWrite === false) {
+    USERMAP = newMap;
+    localData = localData || { lines: Object.fromEntries(T.LINES.map(l => [l, []])), plant: [] };
+    for (const d of o.lineDays) { const arr = localData.lines[d.hat]; const i = arr.findIndex(x => x.tarih === d.tarih); if (i >= 0) arr[i] = d; else arr.push(d); }
+    for (const d of o.plantDays) { const i = localData.plant.findIndex(x => x.tarih === d.tarih); if (i >= 0) localData.plant[i] = d; else localData.plant.push(d); }
+    localData.plant.sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    for (const l of T.LINES) localData.lines[l].sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    pending = null; $("upDlg").close(); render(); return;
+  }
+  btn.disabled = true; $("upCancel").disabled = true; btn.dataset.busy = "1";
+  suspend = true;
+  const upId = "u" + Date.now();
+  const now = new Date().toISOString();
+  let stop = null;
+  const write = async (path, body) => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try { await db.doc(path).set(body); return true; }
+      catch (err) {
+        const code = err && err.code;
+        if (code === "invalid_argument" || code === "not_granted") { stop = "Kayıt yetkiniz yok ya da veri geçersiz. Panelin sahibinden Katkıda bulunan izni isteyin."; return false; }
+        if (code === "quota_exceeded") { stop = "Veri kotası doldu. Eski günlerin silinmesi gerekiyor."; return false; }
+        if (code === "revoked") { stop = "Bu sayfaya erişim değişti. Sayfayı yenileyin."; return false; }
+        await new Promise(r => setTimeout(r, 400 * Math.pow(2, attempt) + Math.random() * 400));
+      }
+    }
+    return false;
+  };
+  try {
+    if (Object.keys(p.choice).length) {
+      if (!(await write("ayarlar/tags", { map: newMap, guncelleme: now }))) throw 0;
+      USERMAP = newMap;
+    }
+    const existing = new Map();
+    for (const [l, arr] of dbLines) for (const d of arr) existing.set("gunluk_hat/" + d.tarih + "_" + l, d);
+    for (const d of dbPlant) existing.set("gunluk_tesis/" + d.tarih, d);
+    const items = [];
+    let skipped = 0;
+    for (const d of o.lineDays) {
+      const path = "gunluk_hat/" + d.tarih + "_" + d.hat;
+      if (sameBody(existing.get(path), d)) { skipped++; continue; }
+      items.push([path, Object.assign({}, d, { kpi: kpiRounded(d), yukleme: upId, guncelleme: now })]);
+    }
+    for (const d of o.plantDays) {
+      const path = "gunluk_tesis/" + d.tarih;
+      if (sameBody(existing.get(path), d)) { skipped++; continue; }
+      items.push([path, Object.assign({}, d, { yukleme: upId, guncelleme: now })]);
+    }
+    let idx = 0, done = 0, failed = 0;
+    const worker = async () => {
+      while (idx < items.length && !stop) {
+        const [path, body] = items[idx++];
+        (await write(path, body)) ? done++ : failed++;
+        setProg(done / Math.max(1, items.length), "Kaydediliyor… " + done + " / " + items.length + (skipped ? " (" + skipped + " kayıt değişmediği için atlandı)" : ""));
+      }
+    };
+    setProg(0, "Kaydediliyor… 0 / " + items.length);
+    await Promise.all([worker(), worker(), worker()]);
+    if (stop || failed) {
+      msg.className = "msg err";
+      msg.textContent = (stop || "Bazı kayıtlar yazılamadı.") + " " + done + " kayıt kaydedildi, " + (items.length - done) + " kayıt kaydedilemedi.";
+      if (stop && stop.startsWith("Kayıt yetkiniz")) canWrite = false;
+      btn.disabled = false; btn.textContent = "Tekrar dene";
+      return;
+    }
+    await write("yuklemeler/" + upId, {
+      dosya: p.fileName, sayfa: p.sheet, ilk: o.firstStamp, son: o.lastStamp, satir: o.rows, adim_dk: o.stepMin,
+      gun: o.plantDays.length, kayit: items.length, atlanan: skipped, kullanici: uid, zaman: now
+    });
+    pending = null; $("upDlg").close();
+  } catch (_) {
+    msg.className = "msg err"; msg.textContent = stop || "Kaydedilemedi."; btn.disabled = false;
+  } finally {
+    delete btn.dataset.busy; $("upCancel").disabled = false; suspend = false; render();
+  }
+});
+
+// ---------- ayarlar ----------
+function numInput(id, val, label) {
+  return '<input class="num" type="number" step="any" id="' + id + '" value="' + (val == null ? "" : val) + '" aria-label="' + esc(label) + '">';
+}
+const NULLABLE = new Set(["p2_ec_max", "prod_ec_max"]);
+let setMapDraft = {};
+function fillSettings(m) {
+  $("setSabit").innerHTML = T.MODEL_FIELDS.sabit.map(([k, l, u]) => "<label><span>" + esc(l) + (u ? " <small>" + esc(u) + "</small>" : "") + (NULLABLE.has(k) ? " <small>(boş = yok)</small>" : "") + "</span>" + numInput("s_" + k, m.sabit[k], l) + "</label>").join("");
+  $("setEsik").innerHTML = T.MODEL_FIELDS.esik.map(([k, l, u]) => "<label><span>" + esc(l) + (u ? " <small>" + esc(u) + "</small>" : "") + "</span>" + numInput("e_" + k, m.esik[k], l) + "</label>").join("");
+  $("setRef").innerHTML = "<thead><tr><th>Hat</th>" + T.MODEL_FIELDS.ref.map(([, l, u]) => "<th>" + esc(l) + (u ? "<small>" + esc(u) + "</small>" : "") + "</th>").join("") + "</tr></thead><tbody>" +
+    T.LINES.map(line => '<tr><td class="hat">' + line + "</td>" + T.MODEL_FIELDS.ref.map(([k, l]) => "<td>" + numInput("r_" + line + "_" + k, m.ref[line][k], line + " " + l) + "</td>").join("") + "</tr>").join("") + "</tbody>";
+}
+function renderTagMap() {
+  const tg = T.targets();
+  const keys = Object.keys(setMapDraft).sort();
+  if (!keys.length) { $("setTags").innerHTML = '<div class="small">Henüz kullanıcı eşleştirmesi yok. Sözlükte olmayan bir tag yüklendiğinde burada görünür.</div>'; return; }
+  const used = new Set(Object.values(setMapDraft).filter(x => x && x !== "ignore"));
+  $("setTags").innerHTML = '<div style="overflow-x:auto"><table class="map-tbl"><thead><tr><th>Tag</th><th>Parametre</th><th></th></tr></thead><tbody>' +
+    keys.map(n => '<tr><td class="tg">' + esc(n) + '</td><td><select id="tm_' + esc(n) + '" data-norm="' + esc(n) + '">' + targetOptions(setMapDraft[n], used) +
+      '</select></td><td><button type="button" class="btn sm" data-del="' + esc(n) + '">Kaldır</button></td></tr>').join("") + "</tbody></table></div>";
+  for (const sel of $("setTags").querySelectorAll("select")) sel.addEventListener("change", () => { setMapDraft[sel.dataset.norm] = sel.value; renderTagMap(); });
+  for (const b of $("setTags").querySelectorAll("[data-del]")) b.addEventListener("click", () => { delete setMapDraft[b.dataset.del]; renderTagMap(); });
+}
+$("setBtn").addEventListener("click", () => {
+  fillSettings(MODEL);
+  setMapDraft = clone(USERMAP); renderTagMap();
+  $("setMsg").textContent = ""; $("setMsg").className = "msg";
+  $("setSave").textContent = db && canWrite !== false ? "Kaydet" : "Bu oturumda uygula";
+  $("setDlg").showModal();
+});
+$("setCancel").addEventListener("click", () => $("setDlg").close());
+$("setReset").addEventListener("click", () => fillSettings(C.mergeModel(null)));
+$("setSave").addEventListener("click", async () => {
+  const err = t => { $("setMsg").textContent = t; $("setMsg").className = "msg err"; };
+  const read = (id, nullable) => {
+    const s = $(id).value.trim();
+    if (s === "") return nullable ? null : undefined;
+    const x = Number(s.replace(",", "."));
+    return isFinite(x) ? x : undefined;
+  };
+  const next = { sabit: {}, esik: {}, ref: {} };
+  for (const [k, l] of T.MODEL_FIELDS.sabit) { const x = read("s_" + k, NULLABLE.has(k)); if (x === undefined) return err(l + " için bir sayı girin."); next.sabit[k] = x; }
+  for (const [k, l] of T.MODEL_FIELDS.esik) { const x = read("e_" + k); if (x === undefined) return err(l + " için bir sayı girin."); next.esik[k] = x; }
+  for (const line of T.LINES) {
+    next.ref[line] = {};
+    for (const [k, l] of T.MODEL_FIELDS.ref) { const x = read("r_" + line + "_" + k, k === "nsp"); if (x === undefined) return err(line + " " + l + " referansı için bir sayı girin."); next.ref[line][k] = x; }
+  }
+  if (next.esik.npf_cip > next.esik.npf_izle) return err("NPF CIP eşiği İZLE eşiğinden büyük olamaz.");
+  if (next.esik.ndp_cip < next.esik.ndp_izle || next.esik.nsp_cip < next.esik.nsp_izle) return err("CIP eşikleri İZLE eşiklerinden küçük olamaz.");
+  const mapChanged = JSON.stringify(setMapDraft) !== JSON.stringify(USERMAP);
+  if (db && canWrite !== false) {
+    $("setSave").disabled = true;
+    try {
+      const now = new Date().toISOString();
+      await db.doc("ayarlar/model").set(Object.assign({}, next, { guncelleme: now, kullanici: uid }));
+      if (mapChanged) await db.doc("ayarlar/tags").set({ map: setMapDraft, guncelleme: now });
+    } catch (e) { $("setSave").disabled = false; return err("Kaydedilemedi: ayarları değiştirme yetkiniz olmayabilir."); }
+    $("setSave").disabled = false;
+  }
+  MODEL = C.mergeModel(next);
+  USERMAP = clone(setMapDraft);
+  if (localData == null && source().kind === "sample") SAMPLE = null;
+  $("setDlg").close(); render();
+});
+
+// ---------- tema ----------
+const rerender = () => { $("passCharts").dataset.sig = ""; $("plantCharts").dataset.sig = ""; render(); };
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender); } catch (_) {}
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+// ---------- açılış ----------
+render();
+
+(async () => {
+  const c = window.claude;
+  if (!c || !c.use) { dbReady = true; render(); return; }
+  const [dbNs, u, dlNs] = await Promise.all([c.use("db"), c.use("user"), c.use("downloads")]);
+  dl = dlNs; userNs = u;
+  if (u) {
+    try { canWrite = await u.can("data.write"); } catch (_) { canWrite = null; }
+    try { uid = await u.id(); } catch (_) { uid = null; }
+  }
+  db = dbNs;
+  if (!db) { dbReady = true; render(); return; }
+  let waiting = T.LINES.length + 1;
+  const arrived = () => { if (waiting > 0 && --waiting === 0) { dbReady = true; } scheduleRender(); };
+  db.doc("ayarlar/model").onSnapshot(s => { MODEL = C.mergeModel(s.exists ? s.data() : null); SAMPLE = null; scheduleRender(); }, () => {});
+  db.doc("ayarlar/tags").onSnapshot(s => { const d = s.exists ? s.data() : null; USERMAP = d && d.map && typeof d.map === "object" ? Object.assign({}, d.map) : {}; }, () => {});
+  for (const line of T.LINES) {
+    let first = true;
+    db.collection("gunluk_hat").where("hat", "==", line).orderBy("tarih", "desc").limit(1000).onSnapshot(snap => {
+      dbLines.set(line, snap.docs.map(d => d.data()).filter(d => d && typeof d.tarih === "string" && d.avg).reverse());
+      if (first) { first = false; arrived(); } else scheduleRender();
+    }, () => { if (first) { first = false; arrived(); } });
+  }
+  {
+    let first = true;
+    db.collection("gunluk_tesis").orderBy("tarih", "desc").limit(1000).onSnapshot(snap => {
+      dbPlant = snap.docs.map(d => d.data()).filter(d => d && typeof d.tarih === "string").reverse();
+      if (first) { first = false; arrived(); } else scheduleRender();
+    }, () => { if (first) { first = false; arrived(); } });
+  }
+  db.collection("yuklemeler").orderBy("zaman", "desc").limit(1).onSnapshot(snap => {
+    lastUpload = snap.docs.length ? snap.docs[0].data() : null; scheduleRender();
+  }, () => {});
+})();
+})();
+</script>
