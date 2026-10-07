@@ -1021,6 +1021,10 @@ $("upSave").addEventListener("click", async () => {
   const p = pending; if (!p || !p.out) return;
   const o = p.out;
   const btn = $("upSave"), msg = $("upMsg");
+  // SharePoint sürümü: veri klasörü bağlı değilse önce bağlat (tıklamanın içinde).
+  if (window.DeminFile && !(await window.DeminFile.ensureWritable())) {
+    msg.className = "msg err"; msg.textContent = "Kaydetmek için veri klasörünü seçin (SharePoint'teki Demin Water klasörü)."; return;
+  }
   // Eşleştirme kararları
   const newMap = Object.assign({}, USERMAP, p.choice);
   if (!db || canWrite === false) {
@@ -1091,9 +1095,10 @@ $("upSave").addEventListener("click", async () => {
       dosya: p.fileName, sayfa: p.sheet, ilk: o.firstStamp, son: o.lastStamp, satir: o.rows, adim_dk: o.stepMin,
       gun: o.plantDays.length, kayit: items.length, atlanan: skipped, kullanici: uid, zaman: now
     });
+    if (window.DeminFile) { setProg(1, "Veri dosyasına yazılıyor…"); await window.DeminFile.flush(); }
     pending = null; $("upDlg").close();
-  } catch (_) {
-    msg.className = "msg err"; msg.textContent = stop || "Kaydedilemedi."; btn.disabled = false;
+  } catch (e) {
+    msg.className = "msg err"; msg.textContent = stop || (e && e.message) || "Kaydedilemedi."; btn.disabled = false;
   } finally {
     delete btn.dataset.busy; $("upCancel").disabled = false; suspend = false; render();
   }
@@ -1149,12 +1154,14 @@ $("setSave").addEventListener("click", async () => {
   if (next.esik.npf_cip > next.esik.npf_izle) return err("NPF CIP eşiği İZLE eşiğinden büyük olamaz.");
   if (next.esik.ndp_cip < next.esik.ndp_izle || next.esik.nsp_cip < next.esik.nsp_izle) return err("CIP eşikleri İZLE eşiklerinden küçük olamaz.");
   const mapChanged = JSON.stringify(setMapDraft) !== JSON.stringify(USERMAP);
+  if (window.DeminFile && !(await window.DeminFile.ensureWritable())) return err("Kaydetmek için veri klasörünü seçin.");
   if (db && canWrite !== false) {
     $("setSave").disabled = true;
     try {
       const now = new Date().toISOString();
       await db.doc("ayarlar/model").set(Object.assign({}, next, { guncelleme: now, kullanici: uid }));
       if (mapChanged) await db.doc("ayarlar/tags").set({ map: setMapDraft, guncelleme: now });
+      if (window.DeminFile) await window.DeminFile.flush();
     } catch (e) { $("setSave").disabled = false; return err("Kaydedilemedi: ayarları değiştirme yetkiniz olmayabilir."); }
     $("setSave").disabled = false;
   }

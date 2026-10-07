@@ -4,6 +4,8 @@ Demin su ünitesi (ACF → UF → Pass-1 → Pass-2 → Katyon/Anyon) için perf
 
 **Panel:** https://claude.ai/artifact/6eYLKeewg6CvLzNgXk9yV5 (claude.ai artifact'ı; kaynağı bu klasörde)
 
+**SharePoint / OneDrive sürümü:** `sharepoint/dist/demin-panel-sharepoint.html` — tek dosya, internetsiz çalışır, veriyi SharePoint klasöründeki `demin-veri.json`'da tutar. Kurulum: `docs/sharepoint.md`.
+
 ## Veri akışı
 
 ```
@@ -30,8 +32,11 @@ Model sabitleri, durum eşikleri, hat referansları ve tag eşleştirmeleri **Ay
 |---|---|
 | `panel/index.html` | Artifact sayfası (arayüz, yükleme, db) |
 | `panel/calc.js` | Saf hesap modülü: başlık algılama, günlük toplama, KPI, durum (tarayıcı global `DeminCalc` + Node `require`) |
+| `panel/file-store.js` | SharePoint sürümünün veri katmanı (klasördeki `demin-veri.json`) |
+| `sharepoint/build.mjs` | SharePoint sürümünü tek HTML dosyası olarak derler → `sharepoint/dist/` |
 | `panel/tags.js` | Tag sözlüğü, varsayılan sabitler/eşikler/hat referansları (`DeminTags`) |
 | `docs/veri-sozlesmesi.md` | PI Excel formatı, tag → parametre tablosu, formüller, db şeması |
+| `docs/sharepoint.md` | SharePoint/OneDrive sürümünün kurulumu ve sınırları |
 | `docs/yol-haritasi.md` | Sonraki fazlar (elle girişler, CIP kaydı vb. — karar bekliyor) |
 | `tests/calc.test.mjs` | `node:test` testleri |
 
