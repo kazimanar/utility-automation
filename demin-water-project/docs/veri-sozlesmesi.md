@@ -13,6 +13,16 @@ Panel yalnız Canary/PI DataLink'ten alınan **ham 10 dk ortalamalı Excel**'i o
 | 6 | PI yolu (`…PTA.xPI91608A_PV`) | Tag satırı yoksa tag buradan çıkarılır |
 | 7+ | A: Excel seri zamanı (10 dk adım), diğerleri sayı | Sayı olmayan, hata ve "Resize…" hücreleri yok sayılır |
 
+### Kaynak Excel: `RO_Analyses_rev2.xlsx` → "Pass1-2 Data"
+
+- **B1 = `t-90d`** (başlangıç), **C1 = `*`** (bitiş). Her kolon tek bir PI DataLink dizi formülüdür:
+  `=PIAdvCalcDat(<satır 6 PI yolu>, $B$1, $C$1, "10m", "average (time-weighted)", "time-weighted", 0, 1, 65|64, "")`
+  (A kolonu formülü zaman damgası + değer döndürür (65), diğerleri yalnız değer (64)). Dizi aralığı sabit: `A7:…13059` (13.053 satır).
+- `t` = bugünün 00:00'ı, `*` = şimdi. Bu yüzden satır sayısı gün içinde artar: 90 gün × 144 = 12.960 satır + bugünün dilimleri. Günün ~16:00'sından sonra 13.053 satırlık aralığı aşar ve PI DataLink "Resize to show all values" yazar. Ayrıca açılışta formüller kendiliğinden yeniden hesaplanmaz. Veriyi tazelemek için PI DataLink penceresinden fonksiyonu açıp OK'e basmak gerekiyor.
+- Hücrelerde görülen metinler: boş `" "` (aralığın veri sonrası kısmı) ve `[-11059] No Good Data For Calculation` (o dilimde veri yok). Panel ikisini de yok sayar.
+- Satır 5'teki birimler güvenilir değildir (ör. ORP satırında "NTU", bulanıklıkta "mv"); panel birimi sözlükten alır.
+- TI-73052 grubu "PASS 2 OUTLET" altında ama açıklaması "RO Inlet Temperature" (kopya etiket gibi duruyor). Teyit hâlâ bekliyor.
+
 - **Sayfa seçimi:** önce adı `Pass1-2 Data` olan, sonra adında "pass"+"data", sonra "data/pi/canary" geçen sayfa denenir; tag satırı bulunan ilk sayfa kullanılır. Yalnız o sayfa ayrıştırılır (SheetJS `dense: true`, `sheets: [ad]`).
 - **Tag satırı algılama:** satır numarası sabit varsayılmaz. İlk 15 satırda `^(PI|PT|FI|FT|AI|AE|TI)-\d{4,6}( ?[A-D])?$` desenine en çok uyan satır (en az 3 eşleşme) tag satırıdır. Bulunamazsa PI yolu satırından `x?([A-Z]{2,4})(\d{4,6})([A-D])?_PV` ile tag üretilir (`xPI91608A_PV` → `PI-91608 A`).
 - **Karşılaştırma:** tag'ler büyük harfe çevrilip harf/rakam dışı karakterler atılarak eşleşir (`PI-91608 A` ≡ `PI91608A`).

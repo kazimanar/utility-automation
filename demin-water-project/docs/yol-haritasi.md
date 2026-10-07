@@ -14,5 +14,6 @@ Bu faz: panel yalnız ham PI Excel'ini alır ve tüm KPI'ları kendisi hesaplar 
 3. **TI-73052 teyidi** — Pass-2 çıkış sıcaklığı olduğu teyit edilmeli; değilse sözlükten çıkarılır.
 4. **P2 permeat EC ve nihai ürün EC limitleri** — değerler belirlenince Ayarlar'dan girilir.
 5. **NSP_ref (Pass-2)** — P2 için referans tuz geçişi belirlenirse NSP %ref P2'de de hesaplanır ve durum kuralına girer.
-6. **Kabul testi** — `RO_Analyses_sade.xlsx` (ya da yeni PI çekimi) yüklenip son 7 gün (26.03–01.04.2026) Excel sonuçlarıyla ±%1 karşılaştırılacak. Örnek hedefler: P1-A Qp 72,65 · recovery 77,46 · St1 dP 2,53 · norm St1 dP 3,13 bar (%156) · NPF 84,0 · NSP %108; P1-C NPF 58,7 · norm St1 dP %222; P2-A recovery 85,1 · NPF 91,3 · OK.
-7. **Rapor çıktısı** — haftalık karar tablosunun Excel indirmesi (`downloads` yeteneği sayfada tanımlı).
+6. **Kabul testi — geçti (07.10.2026).** `RO_Analyses_rev2.xlsx` ("Pass1-2 Data", 08.07–06.10.2026 14:00, 13.045 dilim, 82 tag'in tamamı sözlükle eşleşti) panelin `calc.js`'iyle işlendi. Son 7 gün ortalamaları Excel'in Panel sayfasıyla 8 hattın tamamında, tüm kolonlarda (çalışma saati, Qp, recovery, gerçek/normalize St1 dP, St2 %ref, NPF, NPF ve St1 dP eğimleri, NSP %ref, P2 permeat EC) ve durumda (P1-A..D CIP, P2-A/B/C OK, P2-D CIP) gösterilen hassasiyette birebir aynı. Excel Panel'deki "Son CIP", "CIP'ten beri" ve "Sıçrama" kolonları CIP_Raw/Sıçrama sayfalarından geliyor; bunlar 1. maddedeki elle giriş fazına ait.
+7. **Veri çekme otomasyonu** — seçenekler `docs/otomasyon.md` içinde.
+8. **Rapor çıktısı** — haftalık karar tablosunun Excel indirmesi (`downloads` yeteneği sayfada tanımlı).
