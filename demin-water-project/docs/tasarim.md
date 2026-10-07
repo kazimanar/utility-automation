@@ -24,3 +24,19 @@
 - Durum her yerde renk + işaret + metinle verilir (■ CIP, ▲ İzle, ● OK, ○ Veri yok); renk tek başına anlam taşımaz.
 - Hat renkleri sabit: A mavi, B turuncu, C yeşil, D sarı (kart işareti, sparkline ve trend serisi aynı).
 - Metinler tema mürekkep tokenlarıyla, seri rengiyle değil.
+
+## Erişilebilirlik (07.10.2026 denetimi, `ui-ux-pro-max` + axe-core)
+
+Gerçek veriyle, açık ve koyu temada axe-core (WCAG 2.0/2.1/2.2 A–AA + best-practice) **0 ihlal**. Denetimde bulunup düzeltilenler:
+
+| Bulgu | Düzeltme |
+|---|---|
+| Açık temada ikincil metin (`--muted`) kontrastı 2,9–3,5:1 (41 öğe) | `--muted` #7d8a8f → #5a676c; tüm açık zeminlerde ≥ 4,78:1 (koyu tema zaten ≥ 4,8:1) |
+| Sayfada `main` bölgesi yok, içerik bölge dışında | Sayfa gövdesi `<main>`; başa "Karar özetine geç" atlama bağlantısı |
+| Hat kartında `article` + `role="button"` (geçersiz rol) | Kart `div role="button"`, Enter / Boşluk ile çalışır |
+| Karta basınca sayfa trendlere kayıyor, odak ekran dışında kalıyor | Odak "RO hat trendleri" başlığına taşınır |
+| Grafiklerin erişilebilir adı yalnız başlık | Her grafiğin etiketi serilerin son değerini ve gününü söyler |
+| Yükleme ilerlemesi ve hata mesajları duyurulmuyor | Bilgi şeridi `role="status"`, diyalog mesajları `aria-live="polite"` |
+| Gizli "vurguyu kaldır" düğmesi bazı ortamlarda görünür kalabiliyordu | `[hidden]` sayfa stilinde de zorunlu |
+
+Kalıcı kurallar: metin kontrastı ≥ 4,5:1 (renkleri token'dan al, sabit renk yazma) · her etkileşimli öğe klavyeyle erişilir ve görünür odaklıdır · durum renk + işaret + metinle verilir · her grafik için son değerleri söyleyen etiket ve karar tablosu metin alternatifi.

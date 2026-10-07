@@ -10,7 +10,7 @@
   --surface-2: #e4eaec;
   --ink: #0f1a1e;
   --ink-2: #46555b;
-  --muted: #7d8a8f;
+  --muted: #5a676c;
   --line: #d3dcdf;
   --accent: #0b6a80;
   --accent-ink: #ffffff;
@@ -47,6 +47,10 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.skip { position: absolute; left: 16px; top: -48px; z-index: 10; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; border-radius: 8px; font: 500 13px var(--f-body); text-decoration: none; }
+.skip:focus { top: 12px; }
+h2[tabindex="-1"]:focus { outline: none; }
 body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
 .wrap { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; display: grid; gap: 22px; }
 @media (max-width: 600px) { .wrap { padding-inline: 16px; } }
@@ -221,7 +225,8 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
-<div class="wrap">
+<main class="wrap">
+  <a class="skip" href="#sumH">Karar özetine geç</a>
   <header class="top">
     <div class="brand">
       <h1>Demin Su Ünitesi Performans Paneli</h1>
@@ -240,10 +245,10 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
     </div>
   </header>
 
-  <div class="notice" id="notice">Veriler yükleniyor…</div>
+  <div class="notice" id="notice" role="status" aria-live="polite">Veriler yükleniyor…</div>
 
   <section class="sec" aria-labelledby="sumH">
-    <div class="sec-h"><h2 id="sumH">Karar özeti</h2><span class="hint" id="sumHint"></span></div>
+    <div class="sec-h"><h2 id="sumH" tabindex="-1">Karar özeti</h2><span class="hint" id="sumHint"></span></div>
     <div class="summary" id="summary"></div>
   </section>
 
@@ -255,7 +260,7 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
 
   <section class="sec" id="trendSec">
     <div class="sec-h">
-      <h2>RO hat trendleri</h2>
+      <h2 id="trendH" tabindex="-1">RO hat trendleri</h2>
       <div class="controls">
         <button type="button" class="btn sm" id="focusClr" hidden></button>
         <div class="seg" role="group" aria-label="Pass seçimi" id="passSel">
@@ -283,7 +288,7 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
     <div class="sec-h"><h2>Tesis trendleri</h2><span class="hint">Günlük ortalamalar · kesikli çizgiler: sarı izleme, kırmızı limit</span></div>
     <div class="charts" id="plantCharts"></div>
   </section>
-</div>
+</main>
 
 <dialog id="upDlg" class="wide">
   <form method="dialog" class="dlg" id="upForm">
@@ -301,7 +306,7 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
       <div style="overflow-x:auto"><table class="map-tbl" id="upUnmatched"></table></div>
     </div>
     <div class="small">Hat KPI'ları yalnız çalışan dilimlerden (Qp ≥ çalışma eşiği) hesaplanır: önce günlük ortalama, sonra KPI. Aynı günün kaydı yeniden yüklenirse üzerine yazılır. Ham 10 dk verisi saklanmaz.</div>
-    <div class="msg" id="upMsg"></div>
+    <div class="msg" id="upMsg" aria-live="polite"></div>
     <div class="row">
       <button type="button" class="btn" id="upCancel">Vazgeç</button>
       <button type="button" class="btn primary" id="upSave" disabled>Kaydet</button>
@@ -321,7 +326,7 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
     <div style="overflow-x:auto"><table class="ref-tbl" id="setRef"></table></div>
     <h3>Tag eşleştirmeleri</h3>
     <div id="setTags"></div>
-    <div class="msg" id="setMsg"></div>
+    <div class="msg" id="setMsg" aria-live="polite"></div>
     <div class="row">
       <button type="button" class="btn" id="setReset">Varsayılan model</button>
       <button type="button" class="btn" id="setCancel">Vazgeç</button>
@@ -614,6 +619,10 @@ function drawChart(def, labels, dates, series, lims) {
     return;
   }
   el.hidden = false; if (empty) empty.remove();
+  // Ekran okuyucu için grafiğin özeti: her serinin son değeri ve günü.
+  const lastOf = s => { for (let i = s.data.length - 1; i >= 0; i--) if (ok(s.data[i])) return [s.data[i], dates[i]]; return null; };
+  const parts = series.map(s => { const L = lastOf(s); return L ? s.label + " " + Number(L[0]).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) + " (" + fmtD(L[1]) + ")" : null; }).filter(Boolean);
+  el.setAttribute("aria-label", def.t + (def.u ? ", " + def.u : "") + ". Son değerler: " + parts.join("; ") + ".");
   if (!window.Chart) return;
   const muted = css("--muted"), grid = css("--grid"), surf = css("--surface"), ink2 = css("--ink-2");
   const n = labels.length;
@@ -809,7 +818,7 @@ function renderCards(v) {
         ? ["NSP", ok(s.nsp_pct) ? fmtN(s.nsp_pct, 0) + "<small>% ref</small>" : "—", !ok(s.nsp_pct) ? "" : s.nsp_pct >= E.nsp_cip ? "crit" : s.nsp_pct >= E.nsp_izle ? "warn" : ""]
         : ["Permeat EC", ok(s.ec_p) ? fmtN(s.ec_p, 2) + "<small>µS/cm</small>" : "—", ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : ""];
       const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde yeterli çalışma yok" : "Eşik aşımı yok");
-      return '<article class="lcard" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
+      return '<div class="lcard" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
         '<div class="lc-h"><span class="ln">' + swatch(l) + l + "</span>" + pillHtml(s.st) + "</div>" +
         '<div class="kpi"><span class="kl">NPF</span><span class="ks">' + spark(npfPts, col, l + " NPF son 30 gün") + '<span class="kt">' + arrow(s.npf_slope, 1, "%") + "</span></span>" +
           '<span class="kv" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + "<small>% ref</small></span>" + bullet(s.npf, E) + "</div>" +
@@ -817,7 +826,7 @@ function renderCards(v) {
           '<span class="kv" data-st="' + sDp + '">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "<small>% ref</small>" : "—") + "</span></div>" +
         '<div class="kpi"><span class="kl">' + third[0] + '</span><span></span><span class="kv" data-st="' + third[2] + '">' + third[1] + "</span></div>" +
         '<div class="lc-f"><span>Çalışma <b>' + fmtN(s.saat, 1) + "</b> h/gün</span><span>Qp <b>" + fmtN(s.qp, 1) + "</b> m³/h</span><span>R <b>" + fmtN(s.rec, 1) + "</b> %</span></div>" +
-        '<div class="lc-why" data-st="' + stCls[s.st] + '">' + esc(why) + "</div></article>";
+        '<div class="lc-why" data-st="' + stCls[s.st] + '">' + esc(why) + "</div></div>";
     }).join("");
     $("cardsP" + pass).innerHTML = html;
   }
@@ -834,6 +843,7 @@ function setFocus(l) {
   if (l) {
     const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     $("trendSec").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    $("trendH").focus({ preventScroll: true });
   }
 }
 function lineFromEvent(e) { const el = e.target.closest("[data-line]"); return el ? el.dataset.line : null; }
