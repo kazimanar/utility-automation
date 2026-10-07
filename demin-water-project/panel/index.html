@@ -73,9 +73,68 @@ button:focus-visible, .btn:focus-within, input:focus-visible, select:focus-visib
 .notice b { font-weight: 600; }
 
 /* process train */
-.train { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 1500px) { .train { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); } }
+.train { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 900px) { .train { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .train { grid-template-columns: minmax(0, 1fr); } }
+
+/* karar özeti */
+.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.srow { display: grid; grid-template-columns: 92px 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 10px 14px; border: 0; border-top: 1px solid var(--grid); background: var(--surface); color: var(--ink); font: 13.5px var(--f-body); text-align: left; cursor: pointer; }
+.srow:first-child { border-top: 0; }
+.srow:hover { background: var(--surface-2); }
+.srow .ln { font-family: var(--f-display); font-weight: 700; font-size: 17px; display: inline-flex; align-items: center; gap: 6px; }
+.srow .why { color: var(--ink-2); min-width: 0; }
+.srow .tr { font-family: var(--f-data); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.srow.quiet { cursor: default; color: var(--ink-2); grid-template-columns: 92px minmax(0, 1fr); }
+.srow.quiet:hover { background: var(--surface); }
+@media (max-width: 700px) { .srow { grid-template-columns: auto auto minmax(0, 1fr); } .srow .tr { grid-column: 1 / -1; } }
+
+/* hat kartları */
+.pass-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start; }
+.pass-lbl { font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--ink-2); padding-top: 12px; letter-spacing: .02em; }
+@media (max-width: 700px) { .pass-row { grid-template-columns: minmax(0, 1fr); } .pass-lbl { padding-top: 0; } }
+.lcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1200px) { .lcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .lcards { grid-template-columns: minmax(0, 1fr); } }
+.lcard { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; display: grid; gap: 8px; align-content: start; min-width: 0; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.lcard::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 10px 10px 0 0; background: var(--line); }
+.lcard[data-st="ok"]::before { background: var(--good); }
+.lcard[data-st="warn"]::before { background: var(--warn); }
+.lcard[data-st="crit"]::before { background: var(--crit); }
+.lcard:hover { border-color: var(--accent); }
+.lcard[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.lcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lc-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lc-h .ln { font-family: var(--f-display); font-weight: 700; font-size: 19px; display: inline-flex; align-items: center; gap: 6px; }
+.kpi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: end; border-top: 1px solid var(--grid); padding-top: 7px; }
+.kpi .kl { font-size: 12px; color: var(--ink-2); }
+.kpi .kv { font-family: var(--f-data); font-size: 20px; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi .kv small { font-family: var(--f-body); font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 3px; }
+.kpi .kv[data-st="warn"] { color: var(--warn-ink); }
+.kpi .kv[data-st="crit"] { color: var(--crit-ink); }
+.kpi .ks { grid-row: span 2; display: grid; justify-items: end; gap: 1px; }
+.kpi .kt { font-family: var(--f-data); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.spark { display: block; width: 112px; height: 30px; overflow: visible; }
+.nospark { font-size: 11px; color: var(--muted); }
+.bullet { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); grid-column: 1 / -1; margin-top: 4px; }
+.bullet .z { position: absolute; top: 0; bottom: 0; }
+.bullet .z.crit { left: 0; background: var(--crit-wash); border-radius: 4px 0 0 4px; }
+.bullet .z.warn { background: var(--warn-wash); }
+.bullet .mark { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.bticks { position: relative; height: 14px; grid-column: 1 / -1; font: 10.5px var(--f-data); color: var(--muted); }
+.bticks span { position: absolute; transform: translateX(-50%); }
+.lc-f { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--ink-2); border-top: 1px solid var(--grid); padding-top: 7px; }
+.lc-f b { font-family: var(--f-data); font-weight: 500; color: var(--ink); }
+.lc-why { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.lc-why[data-st="crit"] { color: var(--crit-ink); }
+.lc-why[data-st="warn"] { color: var(--warn-ink); }
+
+/* katlanabilir karar tablosu */
+#decBox > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; cursor: pointer; list-style: none; padding: 2px 0 10px; }
+#decBox > summary::-webkit-details-marker { display: none; }
+#decBox > summary::before { content: "▸"; color: var(--muted); font-size: 14px; transition: transform .15s; }
+#decBox[open] > summary::before { transform: rotate(90deg); }
+#decBox .sum-h { font-family: var(--f-display); font-weight: 600; font-size: 20px; letter-spacing: .02em; }
 @media (max-width: 600px) { .train { grid-template-columns: minmax(0, 1fr); } }
 .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
 .stage::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 10px 10px 0 0; background: var(--line); }
@@ -91,18 +150,13 @@ button:focus-visible, .btn:focus-within, input:focus-visible, select:focus-visib
 .pill[data-st="crit"] { background: var(--crit-wash); color: var(--crit-ink); }
 .mrow { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-top: 1px solid var(--grid); padding-top: 6px; }
 .mrow .ml { color: var(--ink-2); font-size: 12.5px; }
-.mrow .mv, .lrow .mv { font-family: var(--f-data); font-size: 15px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mrow .mv { font-family: var(--f-data); font-size: 15px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mrow .mv small { font-family: var(--f-body); color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 3px; }
 .mv[data-st="warn"] { color: var(--warn-ink); }
 .mv[data-st="crit"] { color: var(--crit-ink); }
 .mk { font-size: 10px; margin-right: 4px; }
 .wait { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--grid); padding-top: 6px; }
-.lrow { display: grid; grid-template-columns: 26px minmax(0, 1fr) 54px 58px; gap: 6px; align-items: center; border-top: 1px solid var(--grid); padding-top: 5px; }
-.lrow.lh { border-top: 0; padding-top: 0; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-.lrow .mv { font-size: 14px; text-align: right; }
-.lrow .ln { font-family: var(--f-display); font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 4px; }
 .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex: none; }
-.lrow.lh span:nth-child(n+3) { text-align: right; }
 
 /* sections */
 .sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
@@ -188,24 +242,41 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
 
   <div class="notice" id="notice">Veriler yükleniyor…</div>
 
-  <section aria-label="Proses hattı durumu">
-    <div class="train" id="train"></div>
+  <section class="sec" aria-labelledby="sumH">
+    <div class="sec-h"><h2 id="sumH">Karar özeti</h2><span class="hint" id="sumHint"></span></div>
+    <div class="summary" id="summary"></div>
   </section>
 
-  <section class="sec">
-    <div class="sec-h"><h2>Hat karar tablosu</h2><span class="hint" id="decHint"></span></div>
-    <div class="tbl-wrap"><table id="decTbl"></table></div>
+  <section class="sec" aria-labelledby="linesH">
+    <div class="sec-h"><h2 id="linesH">RO hatları</h2><span class="hint">Değerler son 7 gün ortalaması · çizgiler son 30 gün · karta tıklayınca hat trendlerde vurgulanır</span></div>
+    <div class="pass-row"><div class="pass-lbl">Pass-1</div><div class="lcards" id="cardsP1"></div></div>
+    <div class="pass-row"><div class="pass-lbl">Pass-2</div><div class="lcards" id="cardsP2"></div></div>
   </section>
 
-  <section class="sec">
+  <section class="sec" id="trendSec">
     <div class="sec-h">
       <h2>RO hat trendleri</h2>
-      <div class="seg" role="group" aria-label="Pass seçimi" id="passSel">
-        <button type="button" data-p="1" aria-pressed="true">Pass-1</button>
-        <button type="button" data-p="2">Pass-2</button>
+      <div class="controls">
+        <button type="button" class="btn sm" id="focusClr" hidden></button>
+        <div class="seg" role="group" aria-label="Pass seçimi" id="passSel">
+          <button type="button" data-p="1" aria-pressed="true">Pass-1</button>
+          <button type="button" data-p="2">Pass-2</button>
+        </div>
       </div>
     </div>
     <div class="charts" id="passCharts"></div>
+  </section>
+
+  <section class="sec">
+    <details id="decBox">
+      <summary><span class="sum-h">Hat karar tablosu</span><span class="hint" id="decHint"></span></summary>
+      <div class="tbl-wrap"><table id="decTbl"></table></div>
+    </details>
+  </section>
+
+  <section class="sec" aria-labelledby="trainH">
+    <div class="sec-h"><h2 id="trainH">Ön arıtma ve ürün</h2><span class="hint">Son günün değerleri</span></div>
+    <div class="train" id="train"></div>
   </section>
 
   <section class="sec">
@@ -307,7 +378,7 @@ let dbPlant = [];
 let lastUpload = null;
 let dbReady = false;
 let localData = null;      // db yokken bu oturumda yüklenen veri
-let range = 30, passSel = 1;
+let range = 30, passSel = 1, focusLine = null;
 let pending = null;
 let suspend = false;
 
@@ -379,17 +450,19 @@ function view() {
   const end = dates[dates.length - 1] || null;
   const from = end && range ? C.isoAddDays(end, -(range - 1)) : (dates[0] || null);
   const days = dates.filter(d => d >= from);
-  const kpi = {};      // line → Map(date → {d, k})
+  const kpi = {};      // line → Map(date → {d, k}), seçili aralık
+  const kpiAll = {};   // line → Map(date → {d, k}), tüm veri (kart çizgileri)
   const summ = {};
   for (const l of T.LINES) {
     const docs = (src.lines[l] || []).slice().sort((a, b) => a.tarih < b.tarih ? -1 : 1);
     const m = new Map();
-    for (const d of docs) if (d.tarih >= from) m.set(d.tarih, { d, k: C.dayKPI(d, MODEL) });
-    kpi[l] = m;
+    const ma = new Map();
+    for (const d of docs) { const r = { d, k: C.dayKPI(d, MODEL) }; ma.set(d.tarih, r); if (d.tarih >= from) m.set(d.tarih, r); }
+    kpi[l] = m; kpiAll[l] = ma;
     summ[l] = end ? C.lineSummary(docs, MODEL, end) : C.lineSummary([], MODEL, isoToday());
   }
   const plantMap = new Map(src.plant.filter(p => p.tarih >= from).map(p => [p.tarih, p]));
-  return { src, dates, end, from, days, kpi, summ, plantMap };
+  return { src, dates, end, from, days, kpi, kpiAll, summ, plantMap };
 }
 
 // ---------- bilgi şeridi ----------
@@ -462,30 +535,6 @@ function renderTrain(v) {
     const sPh = ph ? band(ph.v, S.ph_lo, S.ph_hi) : "na";
     const body = mrow("Çıkış debisi Σ", qsum, 0, "m³/h", "") + mrow("RO giriş bulanıklık", tu && tu.v, 3, "NTU", sTu) + mrow("Çıkış pH", ph && ph.v, 2, "", sPh);
     out.push(stage("UF", "Ultrafiltrasyon", worst([qsum != null ? "ok" : "na", sTu, sPh]), null, body));
-  }
-  // Pass-1, Pass-2
-  for (const pass of [1, 2]) {
-    const lines = T.LINES.filter(l => +l[1] === pass);
-    const stMap = { cip: "crit", izle: "warn", ok: "ok", na: "na" };
-    const E = MODEL.esik;
-    let rows = '<div class="lrow lh"><span>Hat</span><span>Durum</span><span>NPF %</span><span>St1 dP</span></div>';
-    const sts = [];
-    for (const l of lines) {
-      const s = v.summ[l]; const st = ST[s.st];
-      sts.push(stMap[s.st]);
-      const sNpf = !ok(s.npf) ? "" : s.npf <= E.npf_cip ? "crit" : s.npf <= E.npf_izle ? "warn" : "";
-      const sDp = !ok(s.n_st1_pct) ? "" : s.n_st1_pct >= E.ndp_cip ? "crit" : s.n_st1_pct >= E.ndp_izle ? "warn" : "";
-      rows += '<div class="lrow"><span class="ln"><span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ')"></span>' + l[3] + '</span>' +
-        '<span><span class="pill" data-st="' + st.cls + '">' + st.mk + " " + st.txt + "</span></span>" +
-        '<span class="mv" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + '</span><span class="mv" data-st="' + sDp + '" title="Normalize St1 dP, % ref">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "%" : "—") + "</span></div>";
-    }
-    const pd = last ? v.plantMap.get(last) : null;
-    const prod = pd && pd.uretim ? pd.uretim["p" + pass] : null;
-    rows += mrow("Son gün üretim", prod, 0, "m³", "");
-    const w = worst(sts);
-    const cnt = { crit: sts.filter(x => x === "crit").length, warn: sts.filter(x => x === "warn").length };
-    const pill = w === "crit" ? cnt.crit + " hat CIP" : w === "warn" ? cnt.warn + " hat izle" : null;
-    out.push(stage("Pass-" + pass, (pass === 1 ? "1. pass RO · 4 hat" : "2. pass RO · 4 hat") + " · son 7 gün", w, pill, rows));
   }
   // Katyon/Anyon
   if (hasGroup(v, "iy")) {
@@ -570,7 +619,7 @@ function drawChart(def, labels, dates, series, lims) {
   const n = labels.length;
   const ds = series.map(s => ({
     label: s.label, data: s.data.map(x => ok(x) ? +(+x).toFixed(4) : null),
-    borderColor: s.color, backgroundColor: s.color, borderWidth: 2, tension: 0.2, spanGaps: false,
+    borderColor: s.color, backgroundColor: s.color, borderWidth: s.width || 2, tension: 0.2, spanGaps: false,
     pointRadius: n > 45 ? 0 : 2.5, pointHoverRadius: 5, pointBackgroundColor: s.color, pointBorderColor: surf, pointBorderWidth: 1.5,
     borderRadius: def.bar ? 4 : 0, maxBarThickness: 16
   }));
@@ -636,7 +685,8 @@ function renderPassCharts(v) {
   const lines = T.LINES.filter(l => +l[1] === passSel);
   for (const def of defs) {
     const series = lines.map((l, i) => ({
-      label: l, color: css(SLOT[i]),
+      label: l, color: focusLine && focusLine[1] === String(passSel) && focusLine !== l ? fade(css(SLOT[i]), 0.28) : css(SLOT[i]),
+      width: focusLine === l ? 3 : 2,
       data: v.days.map(d => { const r = v.kpi[l].get(d); return r && r.k ? def.f(r.k, r.d) : null; })
     }));
     def.empty = "Bu aralıkta ≥ " + fmtN(MODEL.sabit.min_run_h, 0) + " h çalışılan gün yok.";
@@ -681,10 +731,124 @@ function renderPlantCharts(v) {
   }
 }
 
+// ---------- karar özeti + hat kartları ----------
+function fade(hex, a) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")";
+}
+const stCls = { cip: "crit", izle: "warn", ok: "ok", na: "na" };
+const swatch = l => '<span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ')"></span>';
+const pillHtml = st => '<span class="pill" data-st="' + ST[st].cls + '">' + ST[st].mk + " " + ST[st].txt + "</span>";
+const arrow = (x, d, unit) => !ok(x) ? "" : (x > 0 ? "↑" : x < 0 ? "↓" : "→") + fmtN(Math.abs(x), d) + " " + unit + "/30 g";
+
+// Son 30 günün (değerlendirme gününe kadar) [gün sırası, değer] dizisi.
+function last30(v, l, f) {
+  if (!v.end) return [];
+  const out = [];
+  for (let i = 0; i < 30; i++) {
+    const iso = C.isoAddDays(v.end, i - 29);
+    const r = v.kpiAll[l].get(iso);
+    out.push([i, r && r.k ? f(r.k, r.d) : null]);
+  }
+  return out;
+}
+function spark(pts, color, label) {
+  const W = 112, H = 30, P = 3;
+  const ys = pts.map(p => p[1]).filter(ok);
+  if (ys.length < 2) return '<span class="nospark">çizgi için veri az</span>';
+  let lo = Math.min(...ys), hi_ = Math.max(...ys);
+  if (hi_ - lo < 1e-9) { lo -= 1; hi_ += 1; }
+  const x = i => P + i / 29 * (W - 2 * P), y = val => H - P - (val - lo) / (hi_ - lo) * (H - 2 * P);
+  let d = "", pen = false, last = null;
+  for (const [i, val] of pts) {
+    if (!ok(val)) { pen = false; continue; }
+    d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(val).toFixed(1); pen = true; last = [x(i), y(val)];
+  }
+  return '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(label) + '"><path d="' + d + '" fill="none" style="stroke:' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>' +
+    (last ? '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.6" style="fill:' + color + ';stroke:var(--surface)" stroke-width="1.2"/>' : "") + "</svg>";
+}
+function bullet(val, E) {
+  const lo = Math.min(50, ok(val) ? Math.floor((val - 5) / 10) * 10 : 50), top = 110;
+  const pc = x => Math.max(0, Math.min(100, (x - lo) / (top - lo) * 100));
+  const ticks = [E.npf_cip, E.npf_izle, 100].filter(ok);
+  return '<div class="bullet" aria-hidden="true"><span class="z crit" style="width:' + pc(E.npf_cip) + '%"></span>' +
+    '<span class="z warn" style="left:' + pc(E.npf_cip) + "%;width:" + (pc(E.npf_izle) - pc(E.npf_cip)) + '%"></span>' +
+    (ok(val) ? '<span class="mark" style="left:' + pc(val) + '%"></span>' : "") + "</div>" +
+    '<div class="bticks" aria-hidden="true">' + ticks.map(t => '<span style="left:' + pc(t) + '%">' + fmtN(t, 0) + "</span>").join("") + "</div>";
+}
+
+function renderSummary(v) {
+  const order = { cip: 0, izle: 1, na: 2, ok: 3 };
+  const lines = T.LINES.slice().sort((a, b) => order[v.summ[a].st] - order[v.summ[b].st] || (v.summ[a].npf ?? 999) - (v.summ[b].npf ?? 999));
+  let html = "";
+  for (const l of lines) {
+    const s = v.summ[l];
+    if (s.st !== "cip" && s.st !== "izle") continue;
+    const tr = [arrow(s.npf_slope, 1, "NPF %"), ok(s.st1_slope) ? arrow(s.st1_slope, 2, "St1 dP bar") : ""].filter(Boolean).join(" · ");
+    html += '<button type="button" class="srow" data-line="' + l + '">' + pillHtml(s.st) + '<span class="ln">' + swatch(l) + l + '</span><span class="why">' + esc(s.reasons.join(" · ")) + '</span><span class="tr">' + tr + "</span></button>";
+  }
+  const okL = lines.filter(l => v.summ[l].st === "ok"), naL = lines.filter(l => v.summ[l].st === "na");
+  if (okL.length) html += '<div class="srow quiet">' + pillHtml("ok") + "<span>" + okL.join(", ") + " · eşik aşımı yok</span></div>";
+  if (naL.length) html += '<div class="srow quiet">' + pillHtml("na") + "<span>" + naL.join(", ") + " · son 7 günde ≥ " + fmtN(MODEL.sabit.min_run_h, 0) + " h çalışılan gün yok</span></div>";
+  $("summary").innerHTML = html;
+  const nC = lines.filter(l => v.summ[l].st === "cip").length, nI = lines.filter(l => v.summ[l].st === "izle").length;
+  $("sumHint").textContent = v.end ? "Değerlendirme: " + fmtD(C.isoAddDays(v.end, -6)) + " – " + fmtD(v.end) + " ortalaması · " + nC + " hat CIP, " + nI + " hat izle" : "";
+}
+
+function renderCards(v) {
+  const E = MODEL.esik, S = MODEL.sabit;
+  for (const pass of [1, 2]) {
+    const html = T.LINES.filter(l => +l[1] === pass).map(l => {
+      const s = v.summ[l], col = "var(" + SLOT[T.UNITS.indexOf(l[3])] + ")";
+      const npfPts = last30(v, l, k => k.npf), dpPts = last30(v, l, k => k.n_st1_pct);
+      const dpSl = C.slope(dpPts.filter(p => ok(p[1])));
+      const sNpf = !ok(s.npf) ? "" : s.npf <= E.npf_cip ? "crit" : s.npf <= E.npf_izle ? "warn" : "";
+      const sDp = !ok(s.n_st1_pct) ? "" : s.n_st1_pct >= E.ndp_cip ? "crit" : s.n_st1_pct >= E.ndp_izle ? "warn" : "";
+      const third = pass === 1
+        ? ["NSP", ok(s.nsp_pct) ? fmtN(s.nsp_pct, 0) + "<small>% ref</small>" : "—", !ok(s.nsp_pct) ? "" : s.nsp_pct >= E.nsp_cip ? "crit" : s.nsp_pct >= E.nsp_izle ? "warn" : ""]
+        : ["Permeat EC", ok(s.ec_p) ? fmtN(s.ec_p, 2) + "<small>µS/cm</small>" : "—", ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : ""];
+      const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde yeterli çalışma yok" : "Eşik aşımı yok");
+      return '<article class="lcard" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
+        '<div class="lc-h"><span class="ln">' + swatch(l) + l + "</span>" + pillHtml(s.st) + "</div>" +
+        '<div class="kpi"><span class="kl">NPF</span><span class="ks">' + spark(npfPts, col, l + " NPF son 30 gün") + '<span class="kt">' + arrow(s.npf_slope, 1, "%") + "</span></span>" +
+          '<span class="kv" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + "<small>% ref</small></span>" + bullet(s.npf, E) + "</div>" +
+        '<div class="kpi"><span class="kl">Norm St1 dP</span><span class="ks">' + spark(dpPts, col, l + " normalize St1 dP son 30 gün") + '<span class="kt">' + arrow(dpSl == null ? null : dpSl * 30, 0, "%") + "</span></span>" +
+          '<span class="kv" data-st="' + sDp + '">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "<small>% ref</small>" : "—") + "</span></div>" +
+        '<div class="kpi"><span class="kl">' + third[0] + '</span><span></span><span class="kv" data-st="' + third[2] + '">' + third[1] + "</span></div>" +
+        '<div class="lc-f"><span>Çalışma <b>' + fmtN(s.saat, 1) + "</b> h/gün</span><span>Qp <b>" + fmtN(s.qp, 1) + "</b> m³/h</span><span>R <b>" + fmtN(s.rec, 1) + "</b> %</span></div>" +
+        '<div class="lc-why" data-st="' + stCls[s.st] + '">' + esc(why) + "</div></article>";
+    }).join("");
+    $("cardsP" + pass).innerHTML = html;
+  }
+}
+
+function setFocus(l) {
+  focusLine = l;
+  if (l) {
+    passSel = +l[1];
+    for (const x of $("passSel").querySelectorAll("button")) x.setAttribute("aria-pressed", +x.dataset.p === passSel ? "true" : "false");
+  }
+  const b = $("focusClr"); b.hidden = !l; b.textContent = l ? l + " vurgulu · kaldır" : "";
+  render();
+  if (l) {
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    $("trendSec").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+}
+function lineFromEvent(e) { const el = e.target.closest("[data-line]"); return el ? el.dataset.line : null; }
+for (const id of ["summary", "cardsP1", "cardsP2"]) {
+  $(id).addEventListener("click", e => { const l = lineFromEvent(e); if (l) setFocus(l); });
+  $(id).addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches(".lcard")) { e.preventDefault(); setFocus(e.target.dataset.line); } });
+}
+$("focusClr").addEventListener("click", () => setFocus(null));
+try { if (localStorage.getItem("demin_dec_open") === "1") $("decBox").open = true; } catch (_) {}
+$("decBox").addEventListener("toggle", () => { try { localStorage.setItem("demin_dec_open", $("decBox").open ? "1" : "0"); } catch (_) {} });
+
 let renderTimer = null;
 function render() {
   const v = view();
-  renderNotice(v); renderTrain(v); renderDecision(v); renderPassCharts(v); renderPlantCharts(v);
+  renderNotice(v); renderSummary(v); renderCards(v); renderPassCharts(v); renderDecision(v); renderTrain(v); renderPlantCharts(v);
 }
 function scheduleRender() {
   if (suspend) return;
