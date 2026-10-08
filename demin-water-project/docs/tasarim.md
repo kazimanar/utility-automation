@@ -61,3 +61,9 @@ Tek bir ilke: değişen şey gözle izlenir, sayfa yeniden çizilmiş gibi gör�
 - Kart KPI sayıları (NPF, norm St1 dP, 3. gösterge) eski değerden yenisine 520 ms'de sayarak oturur (`tweenKpi`). Türkçe sayı biçimi korunur (`fmtN`).
 - Aralık, pass seçimi ve hat odağı View Transitions ile geçer (`renderSmooth`). Kartlar ve özet satırları `view-transition-name` taşır; durum sırası değişince satırlar yer değiştirir.
 - Destek yoksa (View Transitions) ya da `prefers-reduced-motion` açıksa anında güncellenir. Veri yükleme ve ayar kaydı gibi arka plan yenilemeleri geçişsiz çalışır.
+
+## Sağlamlaştırma (harden)
+
+- **Grafik kütüphanesi yüklenemezse** (ağ, güvenlik duvarı) paneldeki 16 grafik boş kalmaz: her biri veriyi tablo olarak gösterir ve bilgi şeridinde tek bir uyarı çıkar. KPI kartları ve karar özeti kütüphaneye bağlı değildir.
+- **Her grafikte "Tablo" düğmesi:** grafiği, günleri en yeni üstte olacak şekilde tabloya çevirir. Klavye ve ekran okuyucu için grafiğin eşdeğeridir.
+- **Kayıt sürerken Esc** yükleme penceresini kapatmaz (kayıt yarıda kalmasın diye).

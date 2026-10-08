@@ -170,6 +170,18 @@ button:focus-visible, .btn:focus-within, input:focus-visible, select:focus-visib
 .charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 860px) { .charts { grid-template-columns: minmax(0, 1fr); } }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; min-width: 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cview { font: 12px var(--f-body); color: var(--ink-2); background: none; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; min-height: 24px; }
+.nochart .cview { display: none; }
+.cview:hover { border-color: var(--accent); color: var(--ink); }
+.cview[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.cview:focus-visible, .ctbl-w:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctbl-w { height: 100%; overflow: auto; font-family: var(--f-data); font-size: 12px; }
+.ctbl { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.ctbl th, .ctbl td { padding: 3px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+.ctbl thead th { position: sticky; top: 0; background: var(--surface); font-weight: 600; color: var(--ink-2); }
+.ctbl tbody th { text-align: left; font-weight: 400; color: var(--ink-2); }
 .card h3 { margin: 0; font-size: 14px; font-weight: 600; }
 .card .unit { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 6px; }
 .card .cdesc { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
@@ -477,15 +489,18 @@ function view() {
 
 // ---------- bilgi şeridi ----------
 function renderNotice(v) {
+  document.documentElement.classList.toggle("nochart", !window.Chart);
   const el = $("notice"); const kind = v.src.kind;
   el.className = "notice" + (kind === "sample" ? " sample" : "");
   el.textContent = "";
   const add = html => { const s = document.createElement("span"); s.innerHTML = html; el.appendChild(s); };
   if (kind === "sample") {
+    if (!window.Chart) add("<b>Grafik kütüphanesi yüklenemedi</b> (ağ ya da güvenlik duvarı). Trendler tablo olarak gösteriliyor.");
     add("<b>Örnek veri gösteriliyor, gerçek tesis verisi değildir.</b>");
     add(dbReady ? "Henüz kayıt yok. Canary/PI DataLink'ten alınan ham 10 dk Excel'ini (\"Pass1-2 Data\" sayfası) yükleyin; KPI'lar panelde hesaplanır." : "Paylaşılan kayıtlar yükleniyor…");
     return;
   }
+  if (!window.Chart) add("<b>Grafik kütüphanesi yüklenemedi</b> (ağ ya da güvenlik duvarı). Trendler tablo olarak gösteriliyor.");
   add("<b>" + (kind === "db" ? "PI verisinden hesaplanan kayıtlar" : "Bu oturumda yüklenen veri (kaydedilmedi)") + "</b>");
   add(v.dates.length + " gün · " + fmtD(v.dates[0]) + " – " + fmtD(v.end));
   add("Görünen aralık: " + v.days.length + " gün");
@@ -602,13 +617,21 @@ function renderDecision(v) {
 
 // ---------- grafikler ----------
 let charts = {};
+const tblMode = new Set();   // tablo olarak gösterilen grafikler (kütüphane yüklenemezse hepsi)
+function chartTable(def, labels, dates, series) {
+  const f = x => ok(x) ? Number(x).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) : "—";
+  let rows = "";
+  for (let i = labels.length - 1; i >= 0; i--) rows += "<tr><th scope=\"row\">" + esc(fmtD(dates[i])) + "</th>" + series.map(s => "<td>" + f(s.data[i]) + "</td>").join("") + "</tr>";
+  return '<table class="ctbl"><caption class="sr">' + esc(def.t) + (def.u ? ", " + esc(def.u) : "") + ', en yeni gün üstte</caption><thead><tr><th scope="col">Gün</th>' +
+    series.map(s => '<th scope="col">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" + rows + "</tbody></table>";
+}
 function chartShells(rootId, defs) {
   const root = $(rootId);
   const sig = defs.map(d => d.id).join("|");
   if (root.dataset.sig === sig) return;
   for (const id in charts) { const el = document.getElementById(id); if (!el || root.contains(el)) { charts[id].destroy(); delete charts[id]; } }
   root.dataset.sig = sig;
-  root.innerHTML = defs.map(d => '<div class="card"><h3>' + d.t + (d.u ? '<span class="unit">' + d.u + "</span>" : "") + "</h3>" +
+  root.innerHTML = defs.map(d => '<div class="card"><div class="card-h"><h3>' + d.t + (d.u ? '<span class="unit">' + d.u + "</span>" : "") + '</h3><button type="button" class="cview" data-chart="' + d.id + '" aria-pressed="' + tblMode.has(d.id) + '" title="Grafiği tablo olarak göster">Tablo</button></div>' +
     '<div class="cdesc">' + (d.d || "&nbsp;") + '</div><div class="cbox" id="box_' + d.id + '"><canvas id="' + d.id + '" role="img" aria-label="' + esc(d.t) + ' trend grafiği"></canvas></div></div>').join("");
 }
 function drawChart(def, labels, dates, series, lims) {
@@ -618,7 +641,7 @@ function drawChart(def, labels, dates, series, lims) {
   let empty = box.querySelector(".empty-c");
   if (!hasData) {
     if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
-    el.hidden = true;
+    el.hidden = true; { const t0 = box.querySelector(".ctbl-w"); if (t0) t0.remove(); }
     if (!empty) { empty = document.createElement("div"); empty.className = "empty-c"; box.appendChild(empty); }
     empty.textContent = def.empty || "Bu aralıkta veri yok.";
     return;
@@ -628,7 +651,17 @@ function drawChart(def, labels, dates, series, lims) {
   const lastOf = s => { for (let i = s.data.length - 1; i >= 0; i--) if (ok(s.data[i])) return [s.data[i], dates[i]]; return null; };
   const parts = series.map(s => { const L = lastOf(s); return L ? s.label + " " + Number(L[0]).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) + " (" + fmtD(L[1]) + ")" : null; }).filter(Boolean);
   el.setAttribute("aria-label", def.t + (def.u ? ", " + def.u : "") + ". Son değerler: " + parts.join("; ") + ".");
-  if (!window.Chart) return;
+  let tbl = box.querySelector(".ctbl-w");
+  if (!window.Chart || tblMode.has(def.id)) {
+    if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
+    el.hidden = true;
+    if (!tbl) { tbl = document.createElement("div"); tbl.className = "ctbl-w"; tbl.tabIndex = 0; tbl.setAttribute("role", "region"); box.appendChild(tbl); }
+    tbl.setAttribute("aria-label", def.t + " verileri");
+    tbl.innerHTML = chartTable(def, labels, dates, series);
+    return;
+  }
+  if (tbl) tbl.remove();
+  el.hidden = false;
   const muted = css("--muted"), grid = css("--grid"), surf = css("--surface"), ink2 = css("--ink-2");
   const n = labels.length;
   const ds = series.map(s => ({
@@ -868,6 +901,12 @@ for (const id of ["summary", "cardsP1", "cardsP2"]) {
   $(id).addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches(".lcard")) { e.preventDefault(); setFocus(e.target.dataset.line); } });
 }
 $("focusClr").addEventListener("click", () => setFocus(null));
+document.addEventListener("click", e => {
+  const b = e.target.closest(".cview"); if (!b) return;
+  const id = b.dataset.chart; if (tblMode.has(id)) tblMode.delete(id); else tblMode.add(id);
+  b.setAttribute("aria-pressed", tblMode.has(id) ? "true" : "false");
+  render();
+});
 try { if (localStorage.getItem("demin_dec_open") === "1") $("decBox").open = true; } catch (_) {}
 $("decBox").addEventListener("toggle", () => { try { localStorage.setItem("demin_dec_open", $("decBox").open ? "1" : "0"); } catch (_) {} });
 
@@ -1168,6 +1207,7 @@ function showUpload() {
 }
 
 $("upCancel").addEventListener("click", () => { dropPending(); $("upDlg").close(); });
+$("upDlg").addEventListener("cancel", e => { if ($("upSave").dataset.busy) e.preventDefault(); });   // kayıt sürerken Esc ile kapanmasın
 $("upDlg").addEventListener("close", () => { if (pending && !$("upSave").dataset.busy) dropPending(); });
 
 const r4 = x => ok(x) ? Math.round(x * 1e4) / 1e4 : null;
