@@ -53,3 +53,11 @@ Gerçek `RO_Analyses_rev2.xlsx` (19,3 MB, 13.045 dilim × 82 tag) ile Chromium'd
 | İlerleme çubuğu | `width` animasyonu | `transform: scaleX`; okuma süresi bilinmeyen adımda kayan çubuk |
 
 Worker, kütüphaneleri sayfadaki `<script data-lib>` etiketlerinden kurar: claude.ai sürümünde `importScripts`, SharePoint sürümünde gömülü metin. Worker açılamazsa aynı iş ana iş parçacığında, parçalar halinde yürür. Sonuçlar iki yolda da öncekiyle birebir aynı.
+
+## Akıcı veri geçişleri (overdrive)
+
+Tek bir ilke: değişen şey gözle izlenir, sayfa yeniden çizilmiş gibi görünmez.
+
+- Kart KPI sayıları (NPF, norm St1 dP, 3. gösterge) eski değerden yenisine 520 ms'de sayarak oturur (`tweenKpi`). Türkçe sayı biçimi korunur (`fmtN`).
+- Aralık, pass seçimi ve hat odağı View Transitions ile geçer (`renderSmooth`). Kartlar ve özet satırları `view-transition-name` taşır; durum sırası değişince satırlar yer değiştirir.
+- Destek yoksa (View Transitions) ya da `prefers-reduced-motion` açıksa anında güncellenir. Veri yükleme ve ayar kaydı gibi arka plan yenilemeleri geçişsiz çalışır.

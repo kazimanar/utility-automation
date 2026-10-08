@@ -233,6 +233,9 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
 .msg { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
 .msg.err { color: var(--crit-ink); }
 .small { font-size: 12px; color: var(--muted); }
+::view-transition-group(*) { animation-duration: .38s; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
@@ -1690,7 +1693,7 @@ function renderSummary(v) {
     const s = v.summ[l];
     if (s.st !== "cip" && s.st !== "izle") continue;
     const tr = [arrow(s.npf_slope, 1, "NPF %"), ok(s.st1_slope) ? arrow(s.st1_slope, 2, "St1 dP bar") : ""].filter(Boolean).join(" · ");
-    html += '<button type="button" class="srow" data-line="' + l + '">' + pillHtml(s.st) + '<span class="ln">' + swatch(l) + l + '</span><span class="why">' + esc(s.reasons.join(" · ")) + '</span><span class="tr">' + tr + "</span></button>";
+    html += '<button type="button" class="srow" style="view-transition-name:s-' + l + '" data-line="' + l + '">' + pillHtml(s.st) + '<span class="ln">' + swatch(l) + l + '</span><span class="why">' + esc(s.reasons.join(" · ")) + '</span><span class="tr">' + tr + "</span></button>";
   }
   const okL = lines.filter(l => v.summ[l].st === "ok"), naL = lines.filter(l => v.summ[l].st === "na");
   if (okL.length) html += '<div class="srow quiet">' + pillHtml("ok") + "<span>" + okL.join(", ") + " · eşik aşımı yok</span></div>";
@@ -1713,13 +1716,13 @@ function renderCards(v) {
         ? ["NSP", ok(s.nsp_pct) ? fmtN(s.nsp_pct, 0) + "<small>% ref</small>" : "—", !ok(s.nsp_pct) ? "" : s.nsp_pct >= E.nsp_cip ? "crit" : s.nsp_pct >= E.nsp_izle ? "warn" : ""]
         : ["Permeat EC", ok(s.ec_p) ? fmtN(s.ec_p, 2) + "<small>µS/cm</small>" : "—", ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : ""];
       const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde yeterli çalışma yok" : "Eşik aşımı yok");
-      return '<div class="lcard" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
+      return '<div class="lcard" style="view-transition-name:c-' + l + '" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
         '<div class="lc-h"><span class="ln">' + swatch(l) + l + "</span>" + pillHtml(s.st) + "</div>" +
         '<div class="kpi"><span class="kl">NPF</span><span class="ks">' + spark(npfPts, col, l + " NPF son 30 gün") + '<span class="kt">' + arrow(s.npf_slope, 1, "%") + "</span></span>" +
-          '<span class="kv" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + "<small>% ref</small></span>" + bullet(s.npf, E) + "</div>" +
+          '<span class="kv" data-k="' + l + ':npf" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + "<small>% ref</small></span>" + bullet(s.npf, E) + "</div>" +
         '<div class="kpi"><span class="kl">Norm St1 dP</span><span class="ks">' + spark(dpPts, col, l + " normalize St1 dP son 30 gün") + '<span class="kt">' + arrow(dpSl == null ? null : dpSl * 30, 0, "%") + "</span></span>" +
-          '<span class="kv" data-st="' + sDp + '">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "<small>% ref</small>" : "—") + "</span></div>" +
-        '<div class="kpi"><span class="kl">' + third[0] + '</span><span></span><span class="kv" data-st="' + third[2] + '">' + third[1] + "</span></div>" +
+          '<span class="kv" data-k="' + l + ':dp" data-st="' + sDp + '">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "<small>% ref</small>" : "—") + "</span></div>" +
+        '<div class="kpi"><span class="kl">' + third[0] + '</span><span></span><span class="kv" data-k="' + l + ':3" data-st="' + third[2] + '">' + third[1] + "</span></div>" +
         '<div class="lc-f"><span>Çalışma <b>' + fmtN(s.saat, 1) + "</b> h/gün</span><span>Qp <b>" + fmtN(s.qp, 1) + "</b> m³/h</span><span>R <b>" + fmtN(s.rec, 1) + "</b> %</span></div>" +
         '<div class="lc-why" data-st="' + stCls[s.st] + '">' + esc(why) + "</div></div>";
     }).join("");
@@ -1753,7 +1756,40 @@ $("decBox").addEventListener("toggle", () => { try { localStorage.setItem("demin
 let renderTimer = null;
 function render() {
   const v = view();
+  const prev = snapKpi();
   renderNotice(v); renderSummary(v); renderCards(v); renderPassCharts(v); renderDecision(v); renderTrain(v); renderPlantCharts(v);
+  tweenKpi(prev);
+}
+// Akıcı geçiş: kartlardaki sayılar eski değerden yenisine sayarak oturur; sıralama değişince özet satırları yer değiştirir.
+const calm = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const trNum = t => { const m = /^-?[\d.]+(,\d+)?/.exec(t || ""); return m ? parseFloat(m[0].replace(/\./g, "").replace(",", ".")) : NaN; };
+function snapKpi() {
+  const m = new Map();
+  for (const el of document.querySelectorAll(".kv[data-k]")) { const n = trNum(el.firstChild && el.firstChild.nodeValue); if (isFinite(n)) m.set(el.dataset.k, n); }
+  return m;
+}
+function tweenKpi(prev) {
+  if (calm() || !prev.size) return;
+  const jobs = [];
+  for (const el of document.querySelectorAll(".kv[data-k]")) {
+    const node = el.firstChild, to = trNum(node && node.nodeValue), from = prev.get(el.dataset.k);
+    if (!isFinite(to) || from == null || from === to) continue;
+    const txt = node.nodeValue, dec = (txt.split(",")[1] || "").length;
+    const suffix = txt.replace(/^-?[\d.]+(,\d+)?/, "");
+    jobs.push({ node, from, to, dec, suffix });
+  }
+  if (!jobs.length) return;
+  const t0 = performance.now(), D = 520;
+  (function step(now) {
+    const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 4);
+    for (const j of jobs) j.node.nodeValue = fmtN(j.from + (j.to - j.from) * e, j.dec) + j.suffix;
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+// Kullanıcı eylemiyle (aralık, pass, hat odağı) tetiklenen yenilemeler View Transitions ile akar; destek yoksa anında.
+function renderSmooth() {
+  if (document.startViewTransition && !calm()) { try { document.startViewTransition(render); return; } catch (_) {} }
+  render();
 }
 function scheduleRender() {
   if (suspend) return;
@@ -1767,7 +1803,7 @@ function bindSeg(id, attr, set, store) {
     set(+b.dataset[attr]);
     for (const x of $(id).querySelectorAll("button")) x.setAttribute("aria-pressed", x === b ? "true" : "false");
     try { localStorage.setItem(store, b.dataset[attr]); } catch (_) {}
-    render();
+    renderSmooth();
   });
   try {
     const r = localStorage.getItem(store);
