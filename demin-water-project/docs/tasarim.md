@@ -40,3 +40,16 @@ Gerçek veriyle, açık ve koyu temada axe-core (WCAG 2.0/2.1/2.2 A–AA + best-
 | Gizli "vurguyu kaldır" düğmesi bazı ortamlarda görünür kalabiliyordu | `[hidden]` sayfa stilinde de zorunlu |
 
 Kalıcı kurallar: metin kontrastı ≥ 4,5:1 (renkleri token'dan al, sabit renk yazma) · her etkileşimli öğe klavyeyle erişilir ve görünür odaklıdır · durum renk + işaret + metinle verilir · her grafik için son değerleri söyleyen etiket ve karar tablosu metin alternatifi.
+
+## Performans (08.10.2026, `/impeccable optimize`)
+
+Gerçek `RO_Analyses_rev2.xlsx` (19,3 MB, 13.045 dilim × 82 tag) ile Chromium'da ölçüldü.
+
+| Ölçüm | Önce | Sonra |
+|---|---|---|
+| Excel okunurken ana iş parçacığındaki uzun görevler | 5.166 ms + 3.034 ms (arayüz ~8 s donuk) | yok (iş Web Worker'da; arayüz tepki veriyor, geçen süre görünür) |
+| Worker açılamayan ortamda (yedek yol) kilit | 8,2 s (iki ayrı `XLSX.read`) | 6,3 s (tek okuma) |
+| Zaman aralığı değişimi (16 grafik), medyan | ~210 ms | ~108 ms (grafikler baştan kurulmuyor, verisi güncelleniyor) |
+| İlerleme çubuğu | `width` animasyonu | `transform: scaleX`; okuma süresi bilinmeyen adımda kayan çubuk |
+
+Worker, kütüphaneleri sayfadaki `<script data-lib>` etiketlerinden kurar: claude.ai sürümünde `importScripts`, SharePoint sürümünde gömülü metin. Worker açılamazsa aynı iş ana iş parçacığında, parçalar halinde yürür. Sonuçlar iki yolda da öncekiyle birebir aynı.

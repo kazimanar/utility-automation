@@ -35,7 +35,8 @@ async function lib({ file, urls, npm }) {
   return readFile(p, "utf8");
 }
 // Satır içi betikte "</script" kapanışı erken bitirmesin.
-const inline = code => "<script>\n" + code.replace(/<\/script/gi, "<\\/script") + "\n</script>";
+// data-lib: panel, Excel ayrıştırma worker'ını bu etiketlerin metninden kurar.
+const inline = (code, lib) => "<script" + (lib ? ' data-lib="' + lib + '"' : "") + ">\n" + code.replace(/<\/script/gi, "<\\/script") + "\n</script>";
 
 let html = await readFile(path.join(panel, "index.html"), "utf8");
 const [chart, xlsx] = await Promise.all(LIBS.map(lib));
@@ -48,9 +49,9 @@ const swap = (from, to) => {
   html = html.replace(from, () => to);
 };
 swap('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>', inline(chart));
-swap('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>', inline(xlsx));
-swap('<script src="tags.js"></script>', inline(tags));
-swap('<script src="calc.js"></script>', inline(calc) + "\n" + inline(store));
+swap('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" data-lib="xlsx"></script>', inline(xlsx, "xlsx"));
+swap('<script src="tags.js" data-lib="tags"></script>', inline(tags, "tags"));
+swap('<script src="calc.js" data-lib="calc"></script>', inline(calc, "calc") + "\n" + inline(store));
 
 const stamp = new Date().toISOString().slice(0, 10);
 const doc = '<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n' +

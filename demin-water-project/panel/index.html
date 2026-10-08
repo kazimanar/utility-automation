@@ -212,7 +212,9 @@ details .chips { margin-top: 8px; }
 .map-tbl td.tg { font-family: var(--f-data); white-space: nowrap; }
 .map-tbl select { font: 13px var(--f-body); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 280px; }
 .prog { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
-.prog > div { height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+.prog > div { height: 100%; width: 100%; background: var(--accent); transform-origin: left center; transform: scaleX(0); transition: transform .15s ease-out; }
+.prog.indet > div { width: 32%; transform: none; animation: prog-slide 1.3s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes prog-slide { from { transform: translateX(-100%); } to { transform: translateX(320%); } }
 .set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
 .set-grid label { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); }
 .set-grid label small { color: var(--muted); }
@@ -336,9 +338,9 @@ input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="tags.js"></script>
-<script src="calc.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" data-lib="xlsx"></script>
+<script src="tags.js" data-lib="tags"></script>
+<script src="calc.js" data-lib="calc"></script>
 <script>
 (function () {
 "use strict";
@@ -608,11 +610,11 @@ function chartShells(rootId, defs) {
 }
 function drawChart(def, labels, dates, series, lims) {
   const el = $(def.id); if (!el) return;
-  if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
   const box = $("box_" + def.id);
   const hasData = series.some(s => s.data.some(ok));
   let empty = box.querySelector(".empty-c");
   if (!hasData) {
+    if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
     el.hidden = true;
     if (!empty) { empty = document.createElement("div"); empty.className = "empty-c"; box.appendChild(empty); }
     empty.textContent = def.empty || "Bu aralıkta veri yok.";
@@ -637,8 +639,18 @@ function drawChart(def, labels, dates, series, lims) {
     ds.push({ label: L.label, data: labels.map(() => L.v), borderColor: L.kind === "crit" ? css("--crit") : css("--warn"), borderWidth: 1.25, borderDash: [5, 4],
       pointRadius: 0, pointHoverRadius: 0, fill: false, _limit: true, type: "line" });
   }
-  charts[def.id] = new Chart(el, {
-    type: def.bar ? "bar" : "line",
+  // Aynı grafik zaten çiziliyse yalnız verisini değiştir (yeniden kurmak 16 grafikte ~150 ms sürüyordu).
+  const type = def.bar ? "bar" : "line", prev = charts[def.id];
+  if (prev && prev.config.type === type && prev.canvas === el) {
+    prev.$m = { dates, def };
+    prev.data.labels = labels; prev.data.datasets = ds;
+    prev.options.plugins.legend.display = series.length > 1;
+    prev.update("none");
+    return;
+  }
+  if (prev) { prev.destroy(); delete charts[def.id]; }
+  const chart = charts[def.id] = new Chart(el, {
+    type,
     data: { labels, datasets: ds },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -649,19 +661,20 @@ function drawChart(def, labels, dates, series, lims) {
       },
       plugins: {
         legend: { display: series.length > 1, align: "start", labels: { color: ink2, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", font: { family: "IBM Plex Sans", size: 12 },
-          filter: it => !ds[it.datasetIndex]._limit } },
+          filter: (it, data) => !data.datasets[it.datasetIndex]._limit } },
         tooltip: {
           filter: it => !it.dataset._limit && it.raw != null,
           backgroundColor: surf, titleColor: css("--ink"), bodyColor: ink2, borderColor: css("--line"), borderWidth: 1, padding: 10,
           titleFont: { family: "IBM Plex Sans", weight: "600" }, bodyFont: { family: "IBM Plex Mono", size: 12 },
           callbacks: {
-            title: items => items.length ? fmtD(dates[items[0].dataIndex]) : "",
-            label: it => " " + it.dataset.label + ": " + Number(it.raw).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) + (def.u ? " " + def.u : "")
+            title: items => items.length ? fmtD(items[0].chart.$m.dates[items[0].dataIndex]) : "",
+            label: it => { const d = it.chart.$m.def; return " " + it.dataset.label + ": " + Number(it.raw).toLocaleString("tr-TR", { maximumFractionDigits: d.dig ?? 2 }) + (d.u ? " " + d.u : ""); }
           }
         }
       }
     }
   });
+  chart.$m = { dates, def };
 }
 
 function passDefs(pass) {
@@ -883,75 +896,179 @@ bindSeg("range", "r", x => range = x, "demin_range");
 bindSeg("passSel", "p", x => passSel = x, "demin_pass");
 
 // ---------- PI Excel okuma ----------
-function sheetRows(ws) {
-  if (!ws) return [];
-  if (ws["!data"]) return ws["!data"];
-  if (Array.isArray(ws)) return ws;
-  return XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true });
-}
-async function readWorkbook(file, onMsg) {
-  if (!window.XLSX) throw new Error("Excel okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
-  onMsg("Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)", 0.05);
-  await tick();
-  const buf = await file.arrayBuffer();
-  await tick();
-  const names = XLSX.read(buf, { type: "array", bookSheets: true }).SheetNames;
-  const order = names.slice().sort((a, b) => score(b) - score(a));
-  function score(n) { return /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0; }
-  let lastErr = null;
-  for (const name of order.slice(0, 6)) {
-    onMsg("“" + name + "” sayfası ayrıştırılıyor…", 0.15);
-    await tick();
-    const wb = XLSX.read(buf, { type: "array", dense: true, sheets: [name], cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false });
-    const rows = sheetRows(wb.Sheets[name]);
-    try { const header = C.detectHeader(rows); return { sheet: name, rows, header }; }
-    catch (e) { lastErr = e; }
-  }
-  throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+// Ağır iş (XLSX.read + günlük toplama) bir Web Worker'da çalışır; satırlar worker'da kalır,
+// eşleştirme değişince yeniden toplama da orada yapılır. Worker açılamazsa aynı iş ana iş parçacığında yürür.
+function workerMain() {
+  const Calc = self.DeminCalc;
+  let rows = null, header = null;
+  const OPTS = { type: "array", dense: true, cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false };
+  const sheetRows = ws => !ws ? [] : ws["!data"] || (Array.isArray(ws) ? ws : XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true }));
+  const score = n => /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0;
+  self.onmessage = e => {
+    const { id, cmd } = e.data;
+    const post = (type, data) => self.postMessage(Object.assign({ id, type }, data));
+    try {
+      if (cmd === "ping") return post("ok", { result: true });
+      if (cmd === "read") {
+        // Tek okuma: önce beklenen sayfa; yoksa sayfa listesinden en olası adaylar.
+        let wb = XLSX.read(e.data.buf, Object.assign({ sheets: ["Pass1-2 Data"] }, OPTS));
+        const order = wb.SheetNames.slice().sort((a, b) => score(b) - score(a));
+        let lastErr = null;
+        for (const name of order.slice(0, 6)) {
+          if (!wb.Sheets[name]) { post("prog", { frac: -1, msg: "“" + name + "” sayfası ayrıştırılıyor…" }); wb = XLSX.read(e.data.buf, Object.assign({ sheets: [name] }, OPTS)); }
+          const r = sheetRows(wb.Sheets[name]);
+          try { header = Calc.detectHeader(r); rows = r; return post("ok", { result: { sheet: name, header } }); }
+          catch (err) { lastErr = err; }
+        }
+        throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+      }
+      if (cmd === "agg") {
+        const cols = Calc.resolveColumns(header.cols, e.data.map);
+        const agg = Calc.makeAggregator(cols, e.data.model);
+        const s0 = header.dataStart, N = rows.length;
+        for (let i = s0; i < N; i++) {
+          const row = rows[i]; if (row) agg.add(row);
+          if ((i - s0) % 4000 === 3999) post("prog", { frac: 0.2 + 0.8 * (i - s0) / Math.max(1, N - s0) });
+        }
+        return post("ok", { result: { cols, out: agg.finish() } });
+      }
+    } catch (err) { post("err", { message: (err && err.message) || String(err) }); }
+  };
 }
 
+// Worker kaynağı: kütüphaneler sayfadaki <script data-lib> etiketlerinden (dosya ise importScripts, gömülüyse metni).
+function workerSource() {
+  const parts = [];
+  for (const lib of ["xlsx", "tags", "calc"]) {
+    const el = document.querySelector('script[data-lib="' + lib + '"]');
+    if (!el) throw new Error("kütüphane yok: " + lib);
+    parts.push(el.src ? "importScripts(" + JSON.stringify(el.src) + ");" : el.textContent);
+  }
+  parts.push("(" + workerMain.toString() + ")();");
+  return parts.join("\n;\n");
+}
+function workerParser() {
+  return new Promise((resolve, reject) => {
+    let w, url;
+    try { url = URL.createObjectURL(new Blob([workerSource()], { type: "text/javascript" })); w = new Worker(url); }
+    catch (e) { if (url) URL.revokeObjectURL(url); return reject(e); }
+    let seq = 0; const waiting = new Map();
+    const fail = err => { for (const [, h] of waiting) h.reject(err); waiting.clear(); };
+    w.onmessage = e => {
+      const h = waiting.get(e.data.id); if (!h) return;
+      if (e.data.type === "prog") return h.onProg && h.onProg(e.data.frac, e.data.msg);
+      waiting.delete(e.data.id);
+      e.data.type === "ok" ? h.resolve(e.data.result) : h.reject(new Error(e.data.message));
+    };
+    w.onerror = e => { e.preventDefault(); fail(new Error(e.message || "Ayrıştırıcı başlatılamadı.")); };
+    const call = (msg, onProg, transfer) => new Promise((res, rej) => { const id = ++seq; waiting.set(id, { resolve: res, reject: rej, onProg }); w.postMessage(Object.assign({ id }, msg), transfer || []); });
+    const api = {
+      kind: "worker",
+      async read(file, onProg) {
+        onProg(-1, "Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)");
+        const buf = await file.arrayBuffer();
+        return call({ cmd: "read", buf }, onProg, [buf]);
+      },
+      agg: (map, model, onProg) => call({ cmd: "agg", map, model }, onProg),
+      dispose() { w.terminate(); URL.revokeObjectURL(url); fail(new Error("İptal edildi.")); }
+    };
+    const timer = setTimeout(() => { api.dispose(); reject(new Error("Ayrıştırıcı zamanında açılmadı.")); }, 20000);
+    call({ cmd: "ping" }).then(() => { clearTimeout(timer); resolve(api); }, err => { clearTimeout(timer); api.dispose(); reject(err); });
+  });
+}
+// Yedek yol: worker açılamazsa (eski tarayıcı, kısıtlı ortam) aynı iş ana iş parçacığında, parçalar halinde.
+function mainParser() {
+  let rows = null, header = null, alive = true;
+  const sheetRows = ws => !ws ? [] : ws["!data"] || (Array.isArray(ws) ? ws : XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true }));
+  const score = n => /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0;
+  const OPTS = { type: "array", dense: true, cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false };
+  return {
+    kind: "main",
+    async read(file, onProg) {
+      if (!window.XLSX) throw new Error("Excel okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+      onProg(-1, "Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)");
+      const buf = await file.arrayBuffer();
+      await new Promise(r => setTimeout(r, 30));
+      let wb = XLSX.read(buf, Object.assign({ sheets: ["Pass1-2 Data"] }, OPTS));
+      const order = wb.SheetNames.slice().sort((a, b) => score(b) - score(a));
+      let lastErr = null;
+      for (const name of order.slice(0, 6)) {
+        if (!wb.Sheets[name]) { onProg(-1, "“" + name + "” sayfası ayrıştırılıyor…"); await tick(); wb = XLSX.read(buf, Object.assign({ sheets: [name] }, OPTS)); }
+        const r = sheetRows(wb.Sheets[name]);
+        try { header = C.detectHeader(r); rows = r; return { sheet: name, header }; } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+    },
+    async agg(map, model, onProg) {
+      const cols = C.resolveColumns(header.cols, map), agg = C.makeAggregator(cols, model);
+      const s0 = header.dataStart, N = rows.length, CH = 4000;
+      for (let r = s0; r < N; r += CH) {
+        const end = Math.min(N, r + CH);
+        for (let i = r; i < end; i++) { const row = rows[i]; if (row) agg.add(row); }
+        onProg(0.2 + 0.8 * (end - s0) / Math.max(1, N - s0));
+        await tick();
+        if (!alive) throw new Error("İptal edildi.");
+      }
+      return { cols, out: agg.finish() };
+    },
+    dispose() { alive = false; rows = null; }
+  };
+}
+async function makeParser() {
+  try { return await workerParser(); } catch (_) { return mainParser(); }
+}
+
+let progTimer = null;
 function setProg(frac, text) {
-  $("upProgBox").hidden = frac == null;
-  if (frac != null) $("upProg").style.width = Math.round(Math.max(0, Math.min(1, frac)) * 100) + "%";
+  const box = $("upProgBox"), bar = $("upProg");
+  box.hidden = frac == null;
+  clearInterval(progTimer); progTimer = null;
+  if (frac === -1) {
+    // Süresi bilinmeyen adım (XLSX okuma): kayan çubuk + geçen süre.
+    box.firstElementChild.classList.add("indet"); bar.style.transform = "";
+    const t0 = Date.now(), base = text || "";
+    const tickText = () => { $("upMsg").className = "msg"; $("upMsg").textContent = base + " " + Math.round((Date.now() - t0) / 1000) + " s"; };
+    tickText(); progTimer = setInterval(tickText, 1000);
+    return;
+  }
+  box.firstElementChild.classList.remove("indet");
+  if (frac != null) bar.style.transform = "scaleX(" + Math.max(0, Math.min(1, frac)).toFixed(3) + ")";
   if (text != null) { $("upMsg").className = "msg"; $("upMsg").textContent = text; }
 }
 function effectiveMap(p) { return Object.assign({}, USERMAP, p.choice); }
+function dropPending() {
+  aggToken++;
+  if (pending && pending.parser) pending.parser.dispose();
+  pending = null; setProg(null);
+}
 
 let aggToken = 0;
 async function runAggregate(p) {
   const my = ++aggToken;
-  const cols = C.resolveColumns(p.header.cols, effectiveMap(p));
-  const agg = C.makeAggregator(cols, MODEL);
-  const rows = p.rows, start = p.header.dataStart, N = rows.length, CH = 4000;
-  for (let r = start; r < N; r += CH) {
-    const end = Math.min(N, r + CH);
-    for (let i = r; i < end; i++) { const row = rows[i]; if (row) agg.add(row); }
-    setProg(0.2 + 0.8 * (end - start) / Math.max(1, N - start), "Günlük ortalamalar hesaplanıyor… " + Math.round((end - start) / Math.max(1, N - start) * 100) + "%");
-    await tick();
-    if (my !== aggToken) return null;
-  }
-  p.cols = cols; p.out = agg.finish();
+  const res = await p.parser.agg(effectiveMap(p), MODEL, f => { if (my === aggToken) setProg(f, "Günlük ortalamalar hesaplanıyor… " + Math.round(Math.max(0, f - 0.2) / 0.8 * 100) + "%"); });
+  if (my !== aggToken) return null;
+  p.cols = res.cols; p.out = res.out;
   return p;
 }
 
 $("file").addEventListener("change", async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   if (!f) return;
-  pending = null;
+  dropPending();
   $("upFacts").innerHTML = ""; $("upMatchedBox").hidden = true; $("upUnmatchedBox").hidden = true;
   $("upSave").disabled = true; $("upSave").textContent = "Kaydet"; $("upCancel").disabled = false;
   setProg(0, "Dosya okunuyor…");
   if (!$("upDlg").open) $("upDlg").showModal();
   try {
-    const wb = await readWorkbook(f, (m, fr) => setProg(fr, m));
-    pending = { fileName: f.name, sheet: wb.sheet, rows: wb.rows, header: wb.header, choice: {} };
+    const parser = await makeParser();
+    const wb = await parser.read(f, (fr, m) => setProg(fr, m));
+    pending = { fileName: f.name, sheet: wb.sheet, header: wb.header, parser, choice: {} };
     const known = T.builtinIndex();
     for (const c of pending.header.cols) if (!known[c.norm] && !USERMAP[c.norm]) pending.choice[c.norm] = "ignore";
     if (!(await runAggregate(pending))) return;
     showUpload();
   } catch (err) {
-    pending = null;
-    setProg(null);
+    dropPending();
     $("upMsg").textContent = (err && err.message) || "Dosya okunamadı."; $("upMsg").className = "msg err";
   }
 });
@@ -1014,8 +1131,8 @@ function showUpload() {
   $("upMsg").textContent = nPlant ? (willStore ? "" : (db ? "Kayıt yetkiniz yok; veri yalnız bu oturumda gösterilir." : "Paylaşılan kayıt kullanılamıyor; veri yalnız bu oturumda gösterilir.")) : "Geçerli zaman damgalı satır bulunamadı.";
 }
 
-$("upCancel").addEventListener("click", () => { aggToken++; pending = null; $("upDlg").close(); });
-$("upDlg").addEventListener("close", () => { if (pending && !$("upSave").dataset.busy) { aggToken++; pending = null; } });
+$("upCancel").addEventListener("click", () => { dropPending(); $("upDlg").close(); });
+$("upDlg").addEventListener("close", () => { if (pending && !$("upSave").dataset.busy) dropPending(); });
 
 const r4 = x => ok(x) ? Math.round(x * 1e4) / 1e4 : null;
 function kpiRounded(doc) {
@@ -1044,7 +1161,7 @@ $("upSave").addEventListener("click", async () => {
     for (const d of o.plantDays) { const i = localData.plant.findIndex(x => x.tarih === d.tarih); if (i >= 0) localData.plant[i] = d; else localData.plant.push(d); }
     localData.plant.sort((a, b) => a.tarih < b.tarih ? -1 : 1);
     for (const l of T.LINES) localData.lines[l].sort((a, b) => a.tarih < b.tarih ? -1 : 1);
-    pending = null; $("upDlg").close(); render(); return;
+    dropPending(); $("upDlg").close(); render(); return;
   }
   btn.disabled = true; $("upCancel").disabled = true; btn.dataset.busy = "1";
   suspend = true;
@@ -1106,7 +1223,7 @@ $("upSave").addEventListener("click", async () => {
       gun: o.plantDays.length, kayit: items.length, atlanan: skipped, kullanici: uid, zaman: now
     });
     if (window.DeminFile) { setProg(1, "Veri dosyasına yazılıyor…"); await window.DeminFile.flush(); }
-    pending = null; $("upDlg").close();
+    dropPending(); $("upDlg").close();
   } catch (e) {
     msg.className = "msg err"; msg.textContent = stop || (e && e.message) || "Kaydedilemedi."; btn.disabled = false;
   } finally {
