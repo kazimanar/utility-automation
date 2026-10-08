@@ -1,0 +1,1419 @@
+<title>Demin Su Ünitesi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control-room stack: header + controls, process-train strip (ACF→UF→Pass-1→Pass-2→Katyon/Anyon→Ürün), line decision table, pass trend grid, plant trend grid */
+:root {
+  --bg: #eef2f3;
+  --surface: #fcfcfb;
+  --surface-2: #e4eaec;
+  --ink: #0f1a1e;
+  --ink-2: #46555b;
+  --muted: #5a676c;
+  --line: #d3dcdf;
+  --accent: #0b6a80;
+  --accent-ink: #ffffff;
+  --grid: #e1e5e6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
+  --good-ink: #0a6e0a; --warn-ink: #8a5a00; --crit-ink: #b02a2a;
+  --good-wash: #e3f3e3; --warn-wash: #fdf1d6; --crit-wash: #fae3e3;
+  --backdrop: rgba(5, 15, 18, .55);
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1315; --surface: #151c1f; --surface-2: #1d272b;
+    --ink: #eef3f4; --ink-2: #b4c1c5; --muted: #84939a; --line: #2a363a;
+    --accent: #4fb3c9; --accent-ink: #0b1a1e; --grid: #263034;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --good-ink: #3fc93f; --warn-ink: #fab219; --crit-ink: #f07070;
+    --good-wash: #15301a; --warn-wash: #33290f; --crit-wash: #3a1a1a;
+    --backdrop: rgba(0, 0, 0, .65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1315; --surface: #151c1f; --surface-2: #1d272b;
+  --ink: #eef3f4; --ink-2: #b4c1c5; --muted: #84939a; --line: #2a363a;
+  --accent: #4fb3c9; --accent-ink: #0b1a1e; --grid: #263034;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --good-ink: #3fc93f; --warn-ink: #fab219; --crit-ink: #f07070;
+  --good-wash: #15301a; --warn-wash: #33290f; --crit-wash: #3a1a1a;
+  --backdrop: rgba(0, 0, 0, .65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.skip { position: absolute; left: 16px; top: -48px; z-index: 10; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; border-radius: 8px; font: 500 13px var(--f-body); text-decoration: none; }
+.skip:focus { top: 12px; }
+h2[tabindex="-1"]:focus { outline: none; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; display: grid; gap: 22px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand { min-width: 0; }
+.brand h1 { font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.brand .sub { color: var(--ink-2); margin-top: 2px; font-size: 13px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: 500 13px var(--f-body); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 13px var(--f-body); padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, .btn:focus-within, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file-btn { position: relative; }
+.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.notice { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px dashed var(--line); color: var(--ink-2); font-size: 13px; }
+.notice.sample { border-color: var(--warn); background: var(--warn-wash); color: var(--ink); }
+.notice b { font-weight: 600; }
+
+/* process train */
+.train { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .train { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .train { grid-template-columns: minmax(0, 1fr); } }
+
+/* karar özeti */
+.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.srow { display: grid; grid-template-columns: 92px 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 10px 14px; border: 0; border-top: 1px solid var(--grid); background: var(--surface); color: var(--ink); font: 13.5px var(--f-body); text-align: left; cursor: pointer; }
+.srow:first-child { border-top: 0; }
+.srow:hover { background: var(--surface-2); }
+.srow .ln { font-family: var(--f-display); font-weight: 700; font-size: 17px; display: inline-flex; align-items: center; gap: 6px; }
+.srow .why { color: var(--ink-2); min-width: 0; }
+.srow .tr { font-family: var(--f-data); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.srow.quiet { cursor: default; color: var(--ink-2); grid-template-columns: 92px minmax(0, 1fr); }
+.srow.quiet:hover { background: var(--surface); }
+@media (max-width: 700px) { .srow { grid-template-columns: auto auto minmax(0, 1fr); } .srow .tr { grid-column: 1 / -1; } }
+
+/* hat kartları */
+.pass-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start; }
+.pass-lbl { font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--ink-2); padding-top: 12px; letter-spacing: .02em; }
+@media (max-width: 700px) { .pass-row { grid-template-columns: minmax(0, 1fr); } .pass-lbl { padding-top: 0; } }
+.lcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1200px) { .lcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .lcards { grid-template-columns: minmax(0, 1fr); } }
+.lcard { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; display: grid; gap: 8px; align-content: start; min-width: 0; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.lcard::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 10px 10px 0 0; background: var(--line); }
+.lcard[data-st="ok"]::before { background: var(--good); }
+.lcard[data-st="warn"]::before { background: var(--warn); }
+.lcard[data-st="crit"]::before { background: var(--crit); }
+.lcard:hover { border-color: var(--accent); }
+.lcard[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.lcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lc-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lc-h .ln { font-family: var(--f-display); font-weight: 700; font-size: 19px; display: inline-flex; align-items: center; gap: 6px; }
+.kpi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: end; border-top: 1px solid var(--grid); padding-top: 7px; }
+.kpi .kl { font-size: 12px; color: var(--ink-2); }
+.kpi .kv { font-family: var(--f-data); font-size: 20px; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi .kv small { font-family: var(--f-body); font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 3px; }
+.kpi .kv[data-st="warn"] { color: var(--warn-ink); }
+.kpi .kv[data-st="crit"] { color: var(--crit-ink); }
+.kpi .ks { grid-row: span 2; display: grid; justify-items: end; gap: 1px; }
+.kpi .kt { font-family: var(--f-data); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.spark { display: block; width: 112px; height: 30px; overflow: visible; }
+.nospark { font-size: 11px; color: var(--muted); }
+.bullet { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); grid-column: 1 / -1; margin-top: 4px; }
+.bullet .z { position: absolute; top: 0; bottom: 0; }
+.bullet .z.crit { left: 0; background: var(--crit-wash); border-radius: 4px 0 0 4px; }
+.bullet .z.warn { background: var(--warn-wash); }
+.bullet .mark { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.bticks { position: relative; height: 14px; grid-column: 1 / -1; font: 10.5px var(--f-data); color: var(--muted); }
+.bticks span { position: absolute; transform: translateX(-50%); }
+.lc-f { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--ink-2); border-top: 1px solid var(--grid); padding-top: 7px; }
+.lc-f b { font-family: var(--f-data); font-weight: 500; color: var(--ink); }
+.lc-why { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.lc-why[data-st="crit"] { color: var(--crit-ink); }
+.lc-why[data-st="warn"] { color: var(--warn-ink); }
+
+/* katlanabilir karar tablosu */
+#decBox > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; cursor: pointer; list-style: none; padding: 2px 0 10px; }
+#decBox > summary::-webkit-details-marker { display: none; }
+#decBox > summary::before { content: "▸"; color: var(--muted); font-size: 14px; transition: transform .15s; }
+#decBox[open] > summary::before { transform: rotate(90deg); }
+#decBox .sum-h { font-family: var(--f-display); font-weight: 600; font-size: 20px; letter-spacing: .02em; }
+@media (max-width: 600px) { .train { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.stage::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 10px 10px 0 0; background: var(--line); }
+.stage[data-st="ok"]::before { background: var(--good); }
+.stage[data-st="warn"]::before { background: var(--warn); }
+.stage[data-st="crit"]::before { background: var(--crit); }
+.stage-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 8px; }
+.stage-h .nm { font-family: var(--f-display); font-weight: 700; font-size: 19px; letter-spacing: .02em; }
+.stage-h .ds { color: var(--muted); font-size: 11.5px; display: block; font-family: var(--f-body); font-weight: 400; letter-spacing: 0; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--ink-2); }
+.pill[data-st="ok"] { background: var(--good-wash); color: var(--good-ink); }
+.pill[data-st="warn"] { background: var(--warn-wash); color: var(--warn-ink); }
+.pill[data-st="crit"] { background: var(--crit-wash); color: var(--crit-ink); }
+.mrow { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-top: 1px solid var(--grid); padding-top: 6px; }
+.mrow .ml { color: var(--ink-2); font-size: 12.5px; }
+.mrow .mv { font-family: var(--f-data); font-size: 15px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mrow .mv small { font-family: var(--f-body); color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 3px; }
+.mv[data-st="warn"] { color: var(--warn-ink); }
+.mv[data-st="crit"] { color: var(--crit-ink); }
+.mk { font-size: 10px; margin-right: 4px; }
+.wait { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--grid); padding-top: 6px; }
+.sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex: none; }
+
+/* sections */
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
+.sec-h h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; letter-spacing: .02em; }
+.sec-h .hint { color: var(--muted); font-size: 12.5px; }
+.sec { display: grid; gap: 10px; min-width: 0; }
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; min-width: 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cview { font: 12px var(--f-body); color: var(--ink-2); background: none; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; min-height: 24px; }
+.nochart .cview { display: none; }
+.cview:hover { border-color: var(--accent); color: var(--ink); }
+.cview[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.cview:focus-visible, .ctbl-w:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctbl-w { height: 100%; overflow: auto; font-family: var(--f-data); font-size: 12px; }
+.ctbl { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.ctbl th, .ctbl td { padding: 3px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+.ctbl thead th { position: sticky; top: 0; background: var(--surface); font-weight: 600; color: var(--ink-2); }
+.ctbl tbody th { text-align: left; font-weight: 400; color: var(--ink-2); }
+.card h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.card .unit { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 6px; }
+.card .cdesc { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+.cbox { position: relative; height: 230px; }
+.empty-c { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 13px; text-align: center; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th { position: sticky; top: 0; background: var(--surface-2); color: var(--ink-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+th small { display: block; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+th:first-child, td:first-child, th.why { text-align: left; }
+td { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+td.hat { font-family: var(--f-display); font-weight: 700; font-size: 15px; }
+td.why { text-align: left; white-space: normal; min-width: 240px; font-family: var(--f-body); font-size: 12px; color: var(--ink-2); }
+td.stc { text-align: center; }
+td[data-st="warn"] { background: var(--warn-wash); color: var(--warn-ink); }
+td[data-st="crit"] { background: var(--crit-wash); color: var(--crit-ink); font-weight: 500; }
+tbody tr.pass-break td { border-top: 2px solid var(--line); }
+
+/* dialogs */
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog.wide { width: min(940px, calc(100vw - 32px)); }
+dialog::backdrop { background: var(--backdrop); }
+.dlg { display: grid; gap: 14px; padding: 18px 20px; min-width: 0; }
+.dlg h2 { font-family: var(--f-display); font-size: 22px; margin: 0; }
+.dlg h3 { font-family: var(--f-display); font-size: 17px; font-weight: 600; margin: 4px 0 0; letter-spacing: .02em; }
+.dlg .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.fact { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.fact .fl { font-size: 11.5px; color: var(--muted); }
+.fact .fv { font-family: var(--f-data); font-size: 14px; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--good-wash); color: var(--good-ink); }
+.chip.miss { background: var(--surface-2); color: var(--ink-2); }
+details summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+details .chips { margin-top: 8px; }
+.map-tbl td, .map-tbl th { text-align: left; font-family: var(--f-body); white-space: normal; }
+.map-tbl td.tg { font-family: var(--f-data); white-space: nowrap; }
+.map-tbl select { font: 13px var(--f-body); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 280px; }
+.prog { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.prog > div { height: 100%; width: 100%; background: var(--accent); transform-origin: left center; transform: scaleX(0); transition: transform .15s ease-out; }
+.prog.indet > div { width: 32%; transform: none; animation: prog-slide 1.3s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes prog-slide { from { transform: translateX(-100%); } to { transform: translateX(320%); } }
+.set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
+.set-grid label { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.set-grid label small { color: var(--muted); }
+input.num { width: 100%; font: 13px var(--f-data); padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.ref-tbl td, .ref-tbl th { padding: 4px 6px; }
+.ref-tbl input.num { width: 82px; }
+.msg { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
+.msg.err { color: var(--crit-ink); }
+.small { font-size: 12px; color: var(--muted); }
+::view-transition-group(*) { animation-duration: .38s; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<main class="wrap">
+  <a class="skip" href="#sumH">Karar özetine geç</a>
+  <header class="top">
+    <div class="brand">
+      <h1>Demin Su Ünitesi Performans Paneli</h1>
+      <div class="sub">ACF → UF → Pass-1 → Pass-2 → Katyon/Anyon · 2 pass × 4 hat RO · PI 10 dk verisinden hesaplanır</div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Zaman aralığı" id="range">
+        <button type="button" data-r="7">7 gün</button>
+        <button type="button" data-r="30" aria-pressed="true">30 gün</button>
+        <button type="button" data-r="90">90 gün</button>
+        <button type="button" data-r="365">1 yıl</button>
+        <button type="button" data-r="0">Tümü</button>
+      </div>
+      <label class="btn primary file-btn">PI Excel yükle<input type="file" id="file" accept=".xlsx,.xlsm,.xls"></label>
+      <button type="button" class="btn" id="setBtn">Ayarlar</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice" role="status" aria-live="polite">Veriler yükleniyor…</div>
+
+  <section class="sec" aria-labelledby="sumH">
+    <div class="sec-h"><h2 id="sumH" tabindex="-1">Karar özeti</h2><span class="hint" id="sumHint"></span></div>
+    <div class="summary" id="summary"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="linesH">
+    <div class="sec-h"><h2 id="linesH">RO hatları</h2><span class="hint">Değerler son 7 gün ortalaması · çizgiler son 30 gün · karta tıklayınca hat trendlerde vurgulanır</span></div>
+    <div class="pass-row"><div class="pass-lbl">Pass-1</div><div class="lcards" id="cardsP1"></div></div>
+    <div class="pass-row"><div class="pass-lbl">Pass-2</div><div class="lcards" id="cardsP2"></div></div>
+  </section>
+
+  <section class="sec" id="trendSec">
+    <div class="sec-h">
+      <h2 id="trendH" tabindex="-1">RO hat trendleri</h2>
+      <div class="controls">
+        <button type="button" class="btn sm" id="focusClr" hidden></button>
+        <div class="seg" role="group" aria-label="Pass seçimi" id="passSel">
+          <button type="button" data-p="1" aria-pressed="true">Pass-1</button>
+          <button type="button" data-p="2">Pass-2</button>
+        </div>
+      </div>
+    </div>
+    <div class="charts" id="passCharts"></div>
+  </section>
+
+  <section class="sec">
+    <details id="decBox">
+      <summary><span class="sum-h">Hat karar tablosu</span><span class="hint" id="decHint"></span></summary>
+      <div class="tbl-wrap"><table id="decTbl"></table></div>
+    </details>
+  </section>
+
+  <section class="sec" aria-labelledby="trainH">
+    <div class="sec-h"><h2 id="trainH">Ön arıtma ve ürün</h2><span class="hint">Son günün değerleri</span></div>
+    <div class="train" id="train"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Tesis trendleri</h2><span class="hint">Günlük ortalamalar · kesikli çizgiler: sarı izleme, kırmızı limit</span></div>
+    <div class="charts" id="plantCharts"></div>
+  </section>
+</main>
+
+<dialog id="upDlg" class="wide">
+  <form method="dialog" class="dlg" id="upForm">
+    <h2>PI Excel önizleme</h2>
+    <div id="upProgBox" hidden><div class="prog"><div id="upProg"></div></div></div>
+    <div class="facts" id="upFacts"></div>
+    <div id="upMatchedBox" hidden>
+      <div class="small" style="margin-bottom:6px">Tanınan tag'ler</div>
+      <div class="chips" id="upGroups"></div>
+      <details id="upDetails"><summary>Tüm eşleşmeleri göster</summary><div class="chips" id="upMatched"></div></details>
+      <details id="upMissBox"><summary id="upMissSum"></summary><div class="chips" id="upMiss"></div></details>
+    </div>
+    <div id="upUnmatchedBox" hidden>
+      <div class="small" style="margin-bottom:6px">Sözlükte olmayan tag'ler: her birini bir parametreye bağlayın ya da yoksayın. Seçim kaydedilir ve sonraki yüklemelerde otomatik tanınır.</div>
+      <div style="overflow-x:auto"><table class="map-tbl" id="upUnmatched"></table></div>
+    </div>
+    <div class="small">Hat KPI'ları yalnız çalışan dilimlerden (Qp ≥ çalışma eşiği) hesaplanır: önce günlük ortalama, sonra KPI. Aynı günün kaydı yeniden yüklenirse üzerine yazılır. Ham 10 dk verisi saklanmaz.</div>
+    <div class="msg" id="upMsg" aria-live="polite"></div>
+    <div class="row">
+      <button type="button" class="btn" id="upCancel">Vazgeç</button>
+      <button type="button" class="btn primary" id="upSave" disabled>Kaydet</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="setDlg" class="wide">
+  <form method="dialog" class="dlg" id="setForm">
+    <h2>Ayarlar</h2>
+    <div class="small">Kaydedilen ayarlar paneli açan herkes için geçerlidir. Referans ve eşik değişiklikleri KPI'ları hemen yeniden hesaplar; çalışma eşiği değişikliği için veriyi yeniden yükleyin.</div>
+    <h3>Model sabitleri ve limitler</h3>
+    <div class="set-grid" id="setSabit"></div>
+    <h3>Durum eşikleri</h3>
+    <div class="set-grid" id="setEsik"></div>
+    <h3>Hat referansları</h3>
+    <div style="overflow-x:auto"><table class="ref-tbl" id="setRef"></table></div>
+    <h3>Tag eşleştirmeleri</h3>
+    <div id="setTags"></div>
+    <div class="msg" id="setMsg" aria-live="polite"></div>
+    <div class="row">
+      <button type="button" class="btn" id="setReset">Varsayılan model</button>
+      <button type="button" class="btn" id="setCancel">Vazgeç</button>
+      <button type="button" class="btn primary" id="setSave">Kaydet</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" data-lib="xlsx"></script>
+<script src="tags.js" data-lib="tags"></script>
+<script src="calc.js" data-lib="calc"></script>
+<script>
+(function () {
+"use strict";
+const T = window.DeminTags, C = window.DeminCalc;
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const tick = () => new Promise(r => setTimeout(r, 0));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const ok = v => v != null && isFinite(v);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+if (!T || !C) {
+  $("notice").textContent = "Hesap modülü yüklenemedi (tags.js / calc.js). Sayfayı yenileyin.";
+  return;
+}
+
+// ---------- biçim ----------
+const fmtN = (v, d = 2) => !ok(v) ? "—" : Number(v).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtS = (v, d = 1) => !ok(v) ? "—" : (v > 0 ? "+" : "") + fmtN(v, d);
+const fmtD = iso => { if (!iso) return "—"; const [y, m, d] = iso.slice(0, 10).split("-"); return d + "." + m + "." + y; };
+const fmtDs = iso => { const [, m, d] = iso.split("-"); return d + "." + m; };
+const fmtStamp = s => s ? fmtD(s.slice(0, 10)) + " " + s.slice(11, 16) : "—";
+const isoToday = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+const ST = {
+  cip: { cls: "crit", txt: "CIP", mk: "■" },
+  izle: { cls: "warn", txt: "İzle", mk: "▲" },
+  ok: { cls: "ok", txt: "OK", mk: "●" },
+  na: { cls: "na", txt: "Veri yok", mk: "○" },
+  wait: { cls: "na", txt: "Tag bekleniyor", mk: "○" }
+};
+const RANK = { na: 0, ok: 1, warn: 2, crit: 3 };
+const SLOT = ["--s1", "--s2", "--s3", "--s4"];
+const PLANT = Object.fromEntries(T.PLANT_PARAMS.map(p => [p.k, p]));
+
+// ---------- durum ----------
+let MODEL = C.mergeModel(null);
+let USERMAP = {};
+let db = null, userNs = null, dl = null, canWrite = null, uid = null;
+const dbLines = new Map(T.LINES.map(l => [l, []]));
+let dbPlant = [];
+let lastUpload = null;
+let dbReady = false;
+let localData = null;      // db yokken bu oturumda yüklenen veri
+let range = 30, passSel = 1, focusLine = null;
+let pending = null;
+let suspend = false;
+
+// ---------- örnek veri (yalnız kayıt yokken; açıkça işaretli) ----------
+function makeSample() {
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const n = () => rnd() - 0.5;
+  const days = 75, end = isoToday();
+  const lines = {}, plant = [];
+  const drift = { "P1-A": [0.16, 0.5], "P1-B": [0.06, 0.15], "P1-C": [0.32, 1.0], "P1-D": [0.03, 0.1],
+    "P2-A": [0.08, 0.1], "P2-B": [0.05, 0.08], "P2-C": [0.12, 0.2], "P2-D": [0.04, 0.05] };
+  const S = MODEL.sabit;
+  for (const line of T.LINES) {
+    const pass = +line[1], R = MODEL.ref[line], [npfDrop, dpRise] = drift[line];
+    const arr = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const iso = C.isoAddDays(end, -i), t = (days - 1 - i) / (days - 1);
+      const off = (line === "P1-D" && i % 23 === 3) || (line === "P2-C" && i > 40 && i < 43);
+      const saat = off ? 2 + rnd() * 1.5 : 22 + rnd() * 2;
+      const temp = (pass === 1 ? 19 : 20) + 2 * Math.sin(t * 3) + n() * 0.6;
+      const qp = R.qp * (0.86 + n() * 0.04), qc = R.qc * (0.95 + n() * 0.06);
+      const ecf = pass === 1 ? 700 + n() * 40 : 18 + n() * 3;
+      const f = Math.pow((qp + 2 * qc) / (R.qp + 2 * R.qc), MODEL.sabit.dp_exp);
+      const st1 = R.st1 * (1 + dpRise * t + n() * 0.03) * f, st2 = R.st2 * (1 + dpRise * 0.3 * t + n() * 0.03) * f;
+      const npf = 1 - npfDrop * t + n() * 0.015;
+      const tcf = C.tcf(temp), rec = qp / (qp + qc);
+      const ecp = pass === 1 ? ecf * (R.nsp || 2.5) / 100 * tcf / (qp / R.qp) * (1 + 0.12 * t + n() * 0.04) : 0.6 + 0.3 * t + n() * 0.1;
+      const pifc = ecf * S.ec_tds * Math.log(1 / (1 - rec)) / rec * S.osm, pip = ecp * S.ec_tds * S.osm;
+      const ndp = qp / (R.k * npf * tcf);
+      const pf = ndp + (st1 + st2) / 2 + (pass === 1 ? S.p1_perm : S.p2_perm) + pifc - pip;
+      const pint = pf - st1, pc = pint - st2, cfo = pf + 0.4;
+      arr.push({ tarih: iso, hat: line, pass, n: 144, run_n: Math.round(saat * 6), saat, uretim: qp * saat,
+        avg: { qp, qc, pf, pint, pc, ec_p: ecp, cf_out: cfo, cf_in: cfo + 0.35 + 0.4 * t + n() * 0.05, t: temp, ec_f: ecf } });
+    }
+    lines[line] = arr;
+  }
+  for (let i = days - 1; i >= 0; i--) {
+    const iso = C.isoAddDays(end, -i), t = (days - 1 - i) / (days - 1);
+    const avg = {
+      uf_q_A: 128 + n() * 8, uf_q_B: 131 + n() * 8, uf_q_C: 126 + n() * 8, uf_q_D: 130 + n() * 8,
+      uf_ph: 7.0 + n() * 0.15, uf_ceb_ph: 7.1 + n() * 0.2, uf_ceb_orp: 210 + n() * 40, uf_turb: 1.8 + n() * 1.2,
+      p1_ec_f: 700 + n() * 40, ro_orp: 180 + n() * 50, ro_turb: 0.08 + n() * 0.05 + (i % 17 === 0 ? 0.15 : 0),
+      p1_ph: 6.95 + n() * 0.25, p1_t: 19 + 2 * Math.sin(t * 3), p2_ec_f: 18 + n() * 3, p2_ph: 7.0 + n() * 0.2,
+      p2_t: 20 + 2 * Math.sin(t * 3), prod_ec: 0.55 + 0.25 * t + n() * 0.08, p2_out_t: 20.4 + 2 * Math.sin(t * 3)
+    };
+    const p1 = T.LINES.filter(l => l[1] === "1").reduce((a, l) => a + lines[l][days - 1 - i].uretim, 0);
+    const p2 = T.LINES.filter(l => l[1] === "2").reduce((a, l) => a + lines[l][days - 1 - i].uretim, 0);
+    plant.push({ tarih: iso, n: 144, avg, pct: { ro_orp: { med: avg.ro_orp, p95: avg.ro_orp + 60 + rnd() * 50 } }, uretim: { p1, p2 } });
+  }
+  return { lines, plant };
+}
+let SAMPLE = null;
+
+function source() {
+  let nDb = 0; for (const a of dbLines.values()) nDb += a.length;
+  if (nDb || dbPlant.length) return { kind: "db", lines: Object.fromEntries(dbLines), plant: dbPlant };
+  if (localData) return { kind: "local", lines: localData.lines, plant: localData.plant };
+  SAMPLE = SAMPLE || makeSample();
+  return { kind: "sample", lines: SAMPLE.lines, plant: SAMPLE.plant };
+}
+
+// ---------- veri görünümü ----------
+function view() {
+  const src = source();
+  const all = new Set();
+  for (const l of T.LINES) for (const d of src.lines[l] || []) all.add(d.tarih);
+  for (const p of src.plant) all.add(p.tarih);
+  const dates = [...all].sort();
+  const end = dates[dates.length - 1] || null;
+  const from = end && range ? C.isoAddDays(end, -(range - 1)) : (dates[0] || null);
+  const days = dates.filter(d => d >= from);
+  const kpi = {};      // line → Map(date → {d, k}), seçili aralık
+  const kpiAll = {};   // line → Map(date → {d, k}), tüm veri (kart çizgileri)
+  const summ = {};
+  for (const l of T.LINES) {
+    const docs = (src.lines[l] || []).slice().sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    const m = new Map();
+    const ma = new Map();
+    for (const d of docs) { const r = { d, k: C.dayKPI(d, MODEL) }; ma.set(d.tarih, r); if (d.tarih >= from) m.set(d.tarih, r); }
+    kpi[l] = m; kpiAll[l] = ma;
+    summ[l] = end ? C.lineSummary(docs, MODEL, end) : C.lineSummary([], MODEL, isoToday());
+  }
+  const plantMap = new Map(src.plant.filter(p => p.tarih >= from).map(p => [p.tarih, p]));
+  return { src, dates, end, from, days, kpi, kpiAll, summ, plantMap };
+}
+
+// ---------- bilgi şeridi ----------
+function renderNotice(v) {
+  document.documentElement.classList.toggle("nochart", !window.Chart);
+  const el = $("notice"); const kind = v.src.kind;
+  el.className = "notice" + (kind === "sample" ? " sample" : "");
+  el.textContent = "";
+  const add = html => { const s = document.createElement("span"); s.innerHTML = html; el.appendChild(s); };
+  if (kind === "sample") {
+    if (!window.Chart) add("<b>Grafik kütüphanesi yüklenemedi</b> (ağ ya da güvenlik duvarı). Trendler tablo olarak gösteriliyor.");
+    add("<b>Örnek veri gösteriliyor, gerçek tesis verisi değildir.</b>");
+    add(dbReady ? "Henüz kayıt yok. Canary/PI DataLink'ten alınan ham 10 dk Excel'ini (\"Pass1-2 Data\" sayfası) yükleyin; KPI'lar panelde hesaplanır." : "Paylaşılan kayıtlar yükleniyor…");
+    return;
+  }
+  if (!window.Chart) add("<b>Grafik kütüphanesi yüklenemedi</b> (ağ ya da güvenlik duvarı). Trendler tablo olarak gösteriliyor.");
+  add("<b>" + (kind === "db" ? "PI verisinden hesaplanan kayıtlar" : "Bu oturumda yüklenen veri (kaydedilmedi)") + "</b>");
+  add(v.dates.length + " gün · " + fmtD(v.dates[0]) + " – " + fmtD(v.end));
+  add("Görünen aralık: " + v.days.length + " gün");
+  if (lastUpload) add("Son yükleme: " + esc(lastUpload.dosya) + " · veri sonu " + fmtStamp(lastUpload.son) + " · " + fmtStamp((lastUpload.zaman || "").replace("T", " ")));
+  if (kind === "db" && canWrite === false) add("Görüntüleme yetkiniz var; veri yüklemek için Katkıda bulunan izni gerekir.");
+}
+
+// ---------- proses şeridi ----------
+function latestPlant(v, k, from) {
+  const arr = v.src.plant;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const p = arr[i]; if (from && p.tarih < from) break;
+    const x = p.avg && p.avg[k]; if (ok(x)) return { v: x, d: p.tarih, p };
+  }
+  return null;
+}
+function hasGroup(v, g) {
+  const keys = T.PLANT_PARAMS.filter(p => p.g === g).map(p => p.k);
+  return v.src.plant.some(p => p.avg && keys.some(k => ok(p.avg[k])));
+}
+function mrow(label, val, d, unit, st, title) {
+  const mk = st === "warn" || st === "crit" ? '<span class="mk" aria-hidden="true">' + (st === "crit" ? "■" : "▲") + "</span>" : "";
+  return '<div class="mrow"><span class="ml">' + label + '</span><span class="mv" data-st="' + (st || "") + '"' + (title ? ' title="' + esc(title) + '"' : "") + ">" + mk +
+    fmtN(val, d) + (unit ? "<small>" + unit + "</small>" : "") + "</span></div>";
+}
+const hi = (v, lim) => ok(v) && ok(lim) && v >= lim ? "crit" : (ok(v) ? "ok" : "na");
+const band = (v, lo, hi_) => !ok(v) ? "na" : (ok(lo) && v < lo) || (ok(hi_) && v > hi_) ? "warn" : "ok";
+function worst(sts) { let w = "na"; for (const s of sts) if (RANK[s] > RANK[w]) w = s; return w; }
+
+function stage(nm, ds, st, pillTxt, body) {
+  const cls = ST[st] ? ST[st].cls : st;
+  const txt = pillTxt || (ST[st] ? ST[st].txt : "");
+  const mk = { ok: "●", warn: "▲", crit: "■", na: "○" }[cls] || "○";
+  return '<article class="stage" data-st="' + cls + '"><div class="stage-h"><span class="nm">' + nm + '<span class="ds">' + ds + '</span></span><span class="pill" data-st="' + cls + '">' + mk + " " + txt + "</span></div>" + body + "</article>";
+}
+
+function renderTrain(v) {
+  const S = MODEL.sabit, last = v.end;
+  const out = [];
+  // ACF
+  if (hasGroup(v, "acf")) {
+    const rows = [], sts = [];
+    let dp = latestPlant(v, "acf_dp");
+    if (!dp) { const a = latestPlant(v, "acf_p_in"), b = latestPlant(v, "acf_p_out"); if (a && b) dp = { v: a.v - b.v, d: a.d }; }
+    if (dp) { rows.push(mrow("ΔP", dp.v, 2, "bar", "", "Gün: " + fmtD(dp.d))); sts.push("ok"); }
+    for (const [k, l, d] of [["acf_orp", "Çıkış ORP", 0], ["acf_cl", "Çıkış klor", 3], ["acf_q", "Debi", 0]]) {
+      const x = latestPlant(v, k); if (x) { rows.push(mrow(l, x.v, d, PLANT[k].u, "", "Gün: " + fmtD(x.d))); sts.push("ok"); }
+    }
+    out.push(stage("ACF", "Aktif karbon filtre", worst(sts), null, rows.join("")));
+  } else out.push(stage("ACF", "Aktif karbon filtre", "wait", null, '<div class="wait">ACF tag\'leri PI Excel\'ine eklenince yüklemede eşleştirin.</div>'));
+  // UF
+  {
+    const qs = ["A", "B", "C", "D"].map(u => latestPlant(v, "uf_q_" + u, last));
+    const qsum = qs.some(Boolean) ? qs.reduce((a, x) => a + (x ? x.v : 0), 0) : null;
+    const tu = latestPlant(v, "ro_turb"), ph = latestPlant(v, "uf_ph");
+    const sTu = tu ? (tu.v >= S.uf_turb_spec ? "crit" : "ok") : "na";
+    const sPh = ph ? band(ph.v, S.ph_lo, S.ph_hi) : "na";
+    const body = mrow("Çıkış debisi Σ", qsum, 0, "m³/h", "") + mrow("RO giriş bulanıklık", tu && tu.v, 3, "NTU", sTu) + mrow("Çıkış pH", ph && ph.v, 2, "", sPh);
+    out.push(stage("UF", "Ultrafiltrasyon", worst([qsum != null ? "ok" : "na", sTu, sPh]), null, body));
+  }
+  // Katyon/Anyon
+  if (hasGroup(v, "iy")) {
+    const rows = [];
+    for (const [k, l, d] of [["iy_ec", "Çıkış iletkenlik", 3], ["iy_sio2", "Silika", 1], ["iy_ph", "pH", 2], ["iy_q", "Debi", 0]]) {
+      const x = latestPlant(v, k); if (x) rows.push(mrow(l, x.v, d, PLANT[k].u, "", "Gün: " + fmtD(x.d)));
+    }
+    out.push(stage("Katyon / Anyon", "İyon değiştirici", "ok", null, rows.join("")));
+  } else out.push(stage("Katyon / Anyon", "İyon değiştirici", "wait", null, '<div class="wait">İletkenlik, silika, pH ve debi tag\'leri eklenince yüklemede eşleştirin.</div>'));
+  // Ürün
+  {
+    const ec = latestPlant(v, "prod_ec"), pd = last ? v.plantMap.get(last) : null;
+    const orp = pd && pd.pct && pd.pct.ro_orp ? pd.pct.ro_orp.p95 : null;
+    const sEc = ec ? hi(ec.v, S.prod_ec_max) : "na", sOrp = ok(orp) ? hi(orp, S.orp_max) : "na";
+    const body = mrow("Nihai ürün EC", ec && ec.v, 3, "µS/cm", sEc) + mrow("RO giriş ORP P95", orp, 0, "mV", sOrp) + mrow("Son gün üretim", pd && pd.uretim ? pd.uretim.p2 : null, 0, "m³", "");
+    out.push(stage("Ürün", "Demin su", worst([sEc, sOrp]), null, body));
+  }
+  $("train").innerHTML = out.join("");
+}
+
+// ---------- karar tablosu ----------
+function renderDecision(v) {
+  const S = MODEL.sabit, E = MODEL.esik;
+  const lvl = (val, cipLim, izleLim, dir) => {
+    if (!ok(val)) return "";
+    if (dir === "lo") return ok(cipLim) && val <= cipLim ? "crit" : ok(izleLim) && val <= izleLim ? "warn" : "";
+    return ok(cipLim) && val >= cipLim ? "crit" : ok(izleLim) && val >= izleLim ? "warn" : "";
+  };
+  const cell = (val, d, st, suffix) => {
+    const mk = st === "warn" || st === "crit" ? '<span class="mk" aria-label="' + (st === "crit" ? "Limit" : "İzle") + '">' + (st === "crit" ? "■" : "▲") + "</span>" : "";
+    return '<td data-st="' + (st || "") + '">' + mk + (suffix === "s" ? fmtS(val, d) : fmtN(val, d)) + "</td>";
+  };
+  const head = "<thead><tr><th>Hat</th><th>Çalışma<small>h/gün</small></th><th>Qp<small>m³/h</small></th><th>Recovery<small>%</small></th>" +
+    "<th>St1 dP<small>bar, gerçek</small></th><th>St1 norm<small>% ref</small></th><th>St2 norm<small>% ref</small></th><th>NPF<small>% ref</small></th>" +
+    "<th>NPF eğim<small>%/30 gün</small></th><th>St1 dP eğim<small>bar/30 gün</small></th><th>NSP<small>% ref</small></th><th>P2 permeat EC<small>µS/cm</small></th>" +
+    "<th>Durum</th><th class='why'>Gerekçe</th></tr></thead>";
+  let body = "";
+  for (const l of T.LINES) {
+    const s = v.summ[l], pass = +l[1], st = ST[s.st];
+    const recLo = pass === 1 ? S.rec_p1_lo : S.rec_p2_lo, recHi = pass === 1 ? S.rec_p1_hi : S.rec_p2_hi;
+    const sRec = ok(s.rec) && (s.rec < recLo || s.rec > recHi) ? "warn" : "";
+    const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde ≥ " + fmtN(S.min_run_h, 0) + " h çalışılan gün yok" : "Eşik aşımı yok");
+    body += '<tr class="' + (l === "P2-A" ? "pass-break" : "") + '"><td class="hat"><span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ');margin-right:6px"></span>' + l + "</td>" +
+      cell(s.saat, 1) + cell(s.qp, 1) + cell(s.rec, 1, sRec) + cell(s.st1, 2, hi(s.st1, S.vessel_dp_max) === "crit" ? "crit" : "") +
+      cell(s.n_st1_pct, 0, lvl(s.n_st1_pct, E.ndp_cip, E.ndp_izle)) + cell(s.n_st2_pct, 0, lvl(s.n_st2_pct, E.ndp_cip, E.ndp_izle)) +
+      cell(s.npf, 1, lvl(s.npf, E.npf_cip, E.npf_izle, "lo")) + cell(s.npf_slope, 1, "", "s") + cell(s.st1_slope, 2, "", "s") +
+      cell(s.nsp_pct, 0, lvl(s.nsp_pct, E.nsp_cip, E.nsp_izle)) +
+      (pass === 2 ? cell(s.ec_p, 2, ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : "") : "<td>—</td>") +
+      '<td class="stc"><span class="pill" data-st="' + st.cls + '">' + st.mk + " " + st.txt + "</span></td>" +
+      '<td class="why">' + esc(why) + "</td></tr>";
+  }
+  $("decTbl").innerHTML = head + "<tbody>" + body + "</tbody>";
+  $("decHint").textContent = v.end ? "Son 7 gün ortalaması (" + fmtD(C.isoAddDays(v.end, -6)) + " – " + fmtD(v.end) + ") · eğimler son 30 gün · KPI'lar ≥ " + fmtN(S.min_run_h, 0) + " h çalışılan günlerden" : "";
+}
+
+// ---------- grafikler ----------
+let charts = {};
+const tblMode = new Set();   // tablo olarak gösterilen grafikler (kütüphane yüklenemezse hepsi)
+function chartTable(def, labels, dates, series) {
+  const f = x => ok(x) ? Number(x).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) : "—";
+  let rows = "";
+  for (let i = labels.length - 1; i >= 0; i--) rows += "<tr><th scope=\"row\">" + esc(fmtD(dates[i])) + "</th>" + series.map(s => "<td>" + f(s.data[i]) + "</td>").join("") + "</tr>";
+  return '<table class="ctbl"><caption class="sr">' + esc(def.t) + (def.u ? ", " + esc(def.u) : "") + ', en yeni gün üstte</caption><thead><tr><th scope="col">Gün</th>' +
+    series.map(s => '<th scope="col">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" + rows + "</tbody></table>";
+}
+function chartShells(rootId, defs) {
+  const root = $(rootId);
+  const sig = defs.map(d => d.id).join("|");
+  if (root.dataset.sig === sig) return;
+  for (const id in charts) { const el = document.getElementById(id); if (!el || root.contains(el)) { charts[id].destroy(); delete charts[id]; } }
+  root.dataset.sig = sig;
+  root.innerHTML = defs.map(d => '<div class="card"><div class="card-h"><h3>' + d.t + (d.u ? '<span class="unit">' + d.u + "</span>" : "") + '</h3><button type="button" class="cview" data-chart="' + d.id + '" aria-pressed="' + tblMode.has(d.id) + '" title="Grafiği tablo olarak göster">Tablo</button></div>' +
+    '<div class="cdesc">' + (d.d || "&nbsp;") + '</div><div class="cbox" id="box_' + d.id + '"><canvas id="' + d.id + '" role="img" aria-label="' + esc(d.t) + ' trend grafiği"></canvas></div></div>').join("");
+}
+function drawChart(def, labels, dates, series, lims) {
+  const el = $(def.id); if (!el) return;
+  const box = $("box_" + def.id);
+  const hasData = series.some(s => s.data.some(ok));
+  let empty = box.querySelector(".empty-c");
+  if (!hasData) {
+    if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
+    el.hidden = true; { const t0 = box.querySelector(".ctbl-w"); if (t0) t0.remove(); }
+    if (!empty) { empty = document.createElement("div"); empty.className = "empty-c"; box.appendChild(empty); }
+    empty.textContent = def.empty || "Bu aralıkta veri yok.";
+    return;
+  }
+  el.hidden = false; if (empty) empty.remove();
+  // Ekran okuyucu için grafiğin özeti: her serinin son değeri ve günü.
+  const lastOf = s => { for (let i = s.data.length - 1; i >= 0; i--) if (ok(s.data[i])) return [s.data[i], dates[i]]; return null; };
+  const parts = series.map(s => { const L = lastOf(s); return L ? s.label + " " + Number(L[0]).toLocaleString("tr-TR", { maximumFractionDigits: def.dig ?? 2 }) + " (" + fmtD(L[1]) + ")" : null; }).filter(Boolean);
+  el.setAttribute("aria-label", def.t + (def.u ? ", " + def.u : "") + ". Son değerler: " + parts.join("; ") + ".");
+  let tbl = box.querySelector(".ctbl-w");
+  if (!window.Chart || tblMode.has(def.id)) {
+    if (charts[def.id]) { charts[def.id].destroy(); delete charts[def.id]; }
+    el.hidden = true;
+    if (!tbl) { tbl = document.createElement("div"); tbl.className = "ctbl-w"; tbl.tabIndex = 0; tbl.setAttribute("role", "region"); box.appendChild(tbl); }
+    tbl.setAttribute("aria-label", def.t + " verileri");
+    tbl.innerHTML = chartTable(def, labels, dates, series);
+    return;
+  }
+  if (tbl) tbl.remove();
+  el.hidden = false;
+  const muted = css("--muted"), grid = css("--grid"), surf = css("--surface"), ink2 = css("--ink-2");
+  const n = labels.length;
+  const ds = series.map(s => ({
+    label: s.label, data: s.data.map(x => ok(x) ? +(+x).toFixed(4) : null),
+    borderColor: s.color, backgroundColor: s.color, borderWidth: s.width || 2, tension: 0.2, spanGaps: false,
+    pointRadius: n > 45 ? 0 : 2.5, pointHoverRadius: 5, pointBackgroundColor: s.color, pointBorderColor: surf, pointBorderWidth: 1.5,
+    borderRadius: def.bar ? 4 : 0, maxBarThickness: 16
+  }));
+  for (const L of lims || []) {
+    if (!ok(L.v)) continue;
+    ds.push({ label: L.label, data: labels.map(() => L.v), borderColor: L.kind === "crit" ? css("--crit") : css("--warn"), borderWidth: 1.25, borderDash: [5, 4],
+      pointRadius: 0, pointHoverRadius: 0, fill: false, _limit: true, type: "line" });
+  }
+  // Aynı grafik zaten çiziliyse yalnız verisini değiştir (yeniden kurmak 16 grafikte ~150 ms sürüyordu).
+  const type = def.bar ? "bar" : "line", prev = charts[def.id];
+  if (prev && prev.config.type === type && prev.canvas === el) {
+    prev.$m = { dates, def };
+    prev.data.labels = labels; prev.data.datasets = ds;
+    prev.options.plugins.legend.display = series.length > 1;
+    prev.update("none");
+    return;
+  }
+  if (prev) { prev.destroy(); delete charts[def.id]; }
+  const chart = charts[def.id] = new Chart(el, {
+    type,
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: { grid: { display: false }, border: { color: grid }, ticks: { color: muted, maxRotation: 0, autoSkipPadding: 14, font: { family: "IBM Plex Mono", size: 10.5 } } },
+        y: { grid: { color: grid }, border: { display: false }, beginAtZero: !!def.bar, ticks: { color: muted, font: { family: "IBM Plex Mono", size: 10.5 }, callback: x => Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 }) } }
+      },
+      plugins: {
+        legend: { display: series.length > 1, align: "start", labels: { color: ink2, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", font: { family: "IBM Plex Sans", size: 12 },
+          filter: (it, data) => !data.datasets[it.datasetIndex]._limit } },
+        tooltip: {
+          filter: it => !it.dataset._limit && it.raw != null,
+          backgroundColor: surf, titleColor: css("--ink"), bodyColor: ink2, borderColor: css("--line"), borderWidth: 1, padding: 10,
+          titleFont: { family: "IBM Plex Sans", weight: "600" }, bodyFont: { family: "IBM Plex Mono", size: 12 },
+          callbacks: {
+            title: items => items.length ? fmtD(items[0].chart.$m.dates[items[0].dataIndex]) : "",
+            label: it => { const d = it.chart.$m.def; return " " + it.dataset.label + ": " + Number(it.raw).toLocaleString("tr-TR", { maximumFractionDigits: d.dig ?? 2 }) + (d.u ? " " + d.u : ""); }
+          }
+        }
+      }
+    }
+  });
+  chart.$m = { dates, def };
+}
+
+function passDefs(pass) {
+  const S = MODEL.sabit, E = MODEL.esik;
+  const lo = pass === 1 ? S.rec_p1_lo : S.rec_p2_lo, hiR = pass === 1 ? S.rec_p1_hi : S.rec_p2_hi;
+  const p = "pc" + pass + "_";
+  const defs = [
+    { id: p + "npf", t: "NPF", u: "% ref", d: "Normalize permeat debisi K / K_ref · TCF ve NDP düzeltmeli", f: (k) => k.npf, dig: 1,
+      lims: [{ v: E.npf_izle, kind: "warn", label: "İzle" }, { v: E.npf_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "nst1", t: "Normalize St1 dP", u: "% ref", d: "Referans debiye (Qp + 2Qc) normalize 1. kademe fark basıncı", f: k => k.n_st1_pct, dig: 0,
+      lims: [{ v: E.ndp_izle, kind: "warn", label: "İzle" }, { v: E.ndp_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "nst2", t: "Normalize St2 dP", u: "% ref", d: "Referans debiye normalize 2. kademe fark basıncı", f: k => k.n_st2_pct, dig: 0,
+      lims: [{ v: E.ndp_izle, kind: "warn", label: "İzle" }, { v: E.ndp_cip, kind: "crit", label: "CIP" }] },
+    { id: p + "st1", t: "Gerçek St1 dP", u: "bar", d: "Pf − Pint · kırmızı: vessel limiti", f: k => k.st1, lims: [{ v: S.vessel_dp_max, kind: "crit", label: "Vessel limiti" }] },
+    { id: p + "rec", t: "Recovery", u: "%", d: "Qp / (Qp + Qc) · sarı: işletme bandı", f: k => k.rec, dig: 1,
+      lims: [{ v: lo, kind: "warn", label: "Bant alt" }, { v: hiR, kind: "warn", label: "Bant üst" }] },
+    { id: p + "qp", t: "Permeat debisi Qp", u: "m³/h", d: "Çalışan dilimlerin günlük ortalaması", f: (k, d) => d.avg.qp, dig: 1 },
+    { id: p + "cf", t: "Kartuş filtre dP", u: "bar", d: "Kartuş giriş − çıkış basıncı", f: k => k.cf_dp, lims: [{ v: S.cf_dp_max, kind: "crit", label: "Limit" }] }
+  ];
+  if (pass === 1) defs.push({ id: p + "nsp", t: "NSP", u: "% ref", d: "Normalize tuz geçişi (EC_p/EC_f · Qp/Qp_ref / TCF) / NSP_ref", f: k => k.nsp_pct, dig: 0,
+    lims: [{ v: E.nsp_izle, kind: "warn", label: "İzle" }, { v: E.nsp_cip, kind: "crit", label: "CIP" }] });
+  else defs.push({ id: p + "ecp", t: "Pass-2 permeat EC", u: "µS/cm", d: "Hat bazında ham permeat iletkenliği (NSP_ref tanımlı değil)", f: (k, d) => d.avg.ec_p, dig: 3,
+    lims: [{ v: S.p2_ec_max, kind: "crit", label: "Limit" }] });
+  return defs;
+}
+function renderPassCharts(v) {
+  const defs = passDefs(passSel);
+  chartShells("passCharts", defs);
+  const labels = v.days.map(fmtDs);
+  const lines = T.LINES.filter(l => +l[1] === passSel);
+  for (const def of defs) {
+    const series = lines.map((l, i) => ({
+      label: l, color: focusLine && focusLine[1] === String(passSel) && focusLine !== l ? fade(css(SLOT[i]), 0.28) : css(SLOT[i]),
+      width: focusLine === l ? 3 : 2,
+      data: v.days.map(d => { const r = v.kpi[l].get(d); return r && r.k ? def.f(r.k, r.d) : null; })
+    }));
+    def.empty = "Bu aralıkta ≥ " + fmtN(MODEL.sabit.min_run_h, 0) + " h çalışılan gün yok.";
+    drawChart(def, labels, v.days, series, def.lims);
+  }
+}
+
+function plantDefs(v) {
+  const S = MODEL.sabit;
+  const a = k => p => p.avg ? p.avg[k] : null;
+  const defs = [
+    { id: "pl_prodec", t: "Nihai ürün EC", u: "µS/cm", d: "AI-91754 · Pass-2 çıkışı", dig: 3, s: [["Ürün EC", a("prod_ec")]], lims: [{ v: S.prod_ec_max, kind: "crit", label: "Limit" }] },
+    { id: "pl_orp", t: "RO giriş ORP", u: "mV", d: "AI-91811 · günlük medyan ve P95", dig: 0,
+      s: [["Medyan", p => p.pct && p.pct.ro_orp ? p.pct.ro_orp.med : null], ["P95", p => p.pct && p.pct.ro_orp ? p.pct.ro_orp.p95 : null]],
+      lims: [{ v: S.orp_max, kind: "crit", label: "Limit" }] },
+    { id: "pl_ph", t: "pH", u: "", d: "Pass-1 ve Pass-2 girişi, UF çıkışı · sarı: işletme bandı", s: [["Pass-1 giriş", a("p1_ph")], ["Pass-2 giriş", a("p2_ph")], ["UF çıkış", a("uf_ph")]],
+      lims: [{ v: S.ph_lo, kind: "warn", label: "Bant alt" }, { v: S.ph_hi, kind: "warn", label: "Bant üst" }] },
+    { id: "pl_t", t: "Sıcaklık", u: "°C", d: "TI-91800, TI-91801, TI-73052 (Pass-2 çıkış, teyit bekliyor)", dig: 1, s: [["Pass-1 giriş", a("p1_t")], ["Pass-2 giriş", a("p2_t")], ["Pass-2 çıkış", a("p2_out_t")]] },
+    { id: "pl_ufq", t: "UF çıkış debileri", u: "m³/h", d: "FT-91770 A–D", dig: 1, s: ["A", "B", "C", "D"].map(u => ["UF-" + u, a("uf_q_" + u)]) },
+    { id: "pl_turb", t: "Bulanıklık", u: "NTU", d: "UF girişi ve RO girişi (UF filtratı) · kırmızı: UF spesifikasyonu", dig: 3, s: [["UF giriş", a("uf_turb")], ["RO giriş", a("ro_turb")]],
+      lims: [{ v: S.uf_turb_spec, kind: "crit", label: "UF spek." }] },
+    { id: "pl_ecf", t: "Besleme iletkenliği", u: "µS/cm", d: "AI-91750 (Pass-1) · AI-91752 (Pass-2)", dig: 1, s: [["Pass-1 besleme", a("p1_ec_f")], ["Pass-2 besleme", a("p2_ec_f")]] },
+    { id: "pl_prod", t: "Pass üretimi", u: "m³/gün", d: "Çalışan dilimlerde Σ Qp × aralık", dig: 0, bar: true,
+      s: [["Pass-1", p => p.uretim ? p.uretim.p1 : null], ["Pass-2", p => p.uretim ? p.uretim.p2 : null]] }
+  ];
+  const has = keys => v.src.plant.some(p => p.avg && keys.some(k => ok(p.avg[k])));
+  if (has(["acf_dp", "acf_p_in"])) defs.push({ id: "pl_acfdp", t: "ACF fark basınç", u: "bar", d: "ACF ΔP ya da giriş − çıkış basıncı", s: [["ACF ΔP", p => p.avg && ok(p.avg.acf_dp) ? p.avg.acf_dp : (p.avg && ok(p.avg.acf_p_in) && ok(p.avg.acf_p_out) ? p.avg.acf_p_in - p.avg.acf_p_out : null)]] });
+  if (has(["acf_orp", "acf_cl"])) defs.push({ id: "pl_acfcl", t: "ACF çıkışı", u: "", d: "Çıkış ORP (mV) / serbest klor (mg/L)", s: [["ORP mV", a("acf_orp")], ["Klor mg/L", a("acf_cl")]].filter(x => has([x[0].startsWith("ORP") ? "acf_orp" : "acf_cl"])) });
+  if (has(["acf_q"])) defs.push({ id: "pl_acfq", t: "ACF debisi", u: "m³/h", d: "", s: [["ACF debi", a("acf_q")]] });
+  if (has(["iy_ec"])) defs.push({ id: "pl_iyec", t: "Katyon/Anyon çıkış iletkenlik", u: "µS/cm", d: "", dig: 3, s: [["İletkenlik", a("iy_ec")]] });
+  if (has(["iy_sio2"])) defs.push({ id: "pl_iysi", t: "Katyon/Anyon çıkış silika", u: "ppb", d: "", dig: 1, s: [["Silika", a("iy_sio2")]] });
+  if (has(["iy_ph", "iy_q"])) defs.push({ id: "pl_iyx", t: "Katyon/Anyon pH ve debi", u: "", d: "", s: [["pH", a("iy_ph")], ["Debi m³/h", a("iy_q")]].filter(x => has([x[0] === "pH" ? "iy_ph" : "iy_q"])) });
+  return defs;
+}
+function renderPlantCharts(v) {
+  const defs = plantDefs(v);
+  chartShells("plantCharts", defs);
+  const labels = v.days.map(fmtDs);
+  for (const def of defs) {
+    const series = def.s.map(([label, f], i) => ({ label, color: css(SLOT[i]), data: v.days.map(d => { const p = v.plantMap.get(d); return p ? f(p) : null; }) }));
+    drawChart(def, labels, v.days, series, def.lims);
+  }
+}
+
+// ---------- karar özeti + hat kartları ----------
+function fade(hex, a) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")";
+}
+const stCls = { cip: "crit", izle: "warn", ok: "ok", na: "na" };
+const swatch = l => '<span class="sw" style="background:var(' + SLOT[T.UNITS.indexOf(l[3])] + ')"></span>';
+const pillHtml = st => '<span class="pill" data-st="' + ST[st].cls + '">' + ST[st].mk + " " + ST[st].txt + "</span>";
+const arrow = (x, d, unit) => !ok(x) ? "" : (x > 0 ? "↑" : x < 0 ? "↓" : "→") + fmtN(Math.abs(x), d) + " " + unit + "/30 g";
+
+// Son 30 günün (değerlendirme gününe kadar) [gün sırası, değer] dizisi.
+function last30(v, l, f) {
+  if (!v.end) return [];
+  const out = [];
+  for (let i = 0; i < 30; i++) {
+    const iso = C.isoAddDays(v.end, i - 29);
+    const r = v.kpiAll[l].get(iso);
+    out.push([i, r && r.k ? f(r.k, r.d) : null]);
+  }
+  return out;
+}
+function spark(pts, color, label) {
+  const W = 112, H = 30, P = 3;
+  const ys = pts.map(p => p[1]).filter(ok);
+  if (ys.length < 2) return '<span class="nospark">çizgi için veri az</span>';
+  let lo = Math.min(...ys), hi_ = Math.max(...ys);
+  if (hi_ - lo < 1e-9) { lo -= 1; hi_ += 1; }
+  const x = i => P + i / 29 * (W - 2 * P), y = val => H - P - (val - lo) / (hi_ - lo) * (H - 2 * P);
+  let d = "", pen = false, last = null;
+  for (const [i, val] of pts) {
+    if (!ok(val)) { pen = false; continue; }
+    d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(val).toFixed(1); pen = true; last = [x(i), y(val)];
+  }
+  return '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(label) + '"><path d="' + d + '" fill="none" style="stroke:' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>' +
+    (last ? '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.6" style="fill:' + color + ';stroke:var(--surface)" stroke-width="1.2"/>' : "") + "</svg>";
+}
+function bullet(val, E) {
+  const lo = Math.min(50, ok(val) ? Math.floor((val - 5) / 10) * 10 : 50), top = 110;
+  const pc = x => Math.max(0, Math.min(100, (x - lo) / (top - lo) * 100));
+  const ticks = [E.npf_cip, E.npf_izle, 100].filter(ok);
+  return '<div class="bullet" aria-hidden="true"><span class="z crit" style="width:' + pc(E.npf_cip) + '%"></span>' +
+    '<span class="z warn" style="left:' + pc(E.npf_cip) + "%;width:" + (pc(E.npf_izle) - pc(E.npf_cip)) + '%"></span>' +
+    (ok(val) ? '<span class="mark" style="left:' + pc(val) + '%"></span>' : "") + "</div>" +
+    '<div class="bticks" aria-hidden="true">' + ticks.map(t => '<span style="left:' + pc(t) + '%">' + fmtN(t, 0) + "</span>").join("") + "</div>";
+}
+
+function renderSummary(v) {
+  const order = { cip: 0, izle: 1, na: 2, ok: 3 };
+  const lines = T.LINES.slice().sort((a, b) => order[v.summ[a].st] - order[v.summ[b].st] || (v.summ[a].npf ?? 999) - (v.summ[b].npf ?? 999));
+  let html = "";
+  for (const l of lines) {
+    const s = v.summ[l];
+    if (s.st !== "cip" && s.st !== "izle") continue;
+    const tr = [arrow(s.npf_slope, 1, "NPF %"), ok(s.st1_slope) ? arrow(s.st1_slope, 2, "St1 dP bar") : ""].filter(Boolean).join(" · ");
+    html += '<button type="button" class="srow" style="view-transition-name:s-' + l + '" data-line="' + l + '">' + pillHtml(s.st) + '<span class="ln">' + swatch(l) + l + '</span><span class="why">' + esc(s.reasons.join(" · ")) + '</span><span class="tr">' + tr + "</span></button>";
+  }
+  const okL = lines.filter(l => v.summ[l].st === "ok"), naL = lines.filter(l => v.summ[l].st === "na");
+  if (okL.length) html += '<div class="srow quiet">' + pillHtml("ok") + "<span>" + okL.join(", ") + " · eşik aşımı yok</span></div>";
+  if (naL.length) html += '<div class="srow quiet">' + pillHtml("na") + "<span>" + naL.join(", ") + " · son 7 günde ≥ " + fmtN(MODEL.sabit.min_run_h, 0) + " h çalışılan gün yok</span></div>";
+  $("summary").innerHTML = html;
+  const nC = lines.filter(l => v.summ[l].st === "cip").length, nI = lines.filter(l => v.summ[l].st === "izle").length;
+  $("sumHint").textContent = v.end ? "Değerlendirme: " + fmtD(C.isoAddDays(v.end, -6)) + " – " + fmtD(v.end) + " ortalaması · " + nC + " hat CIP, " + nI + " hat izle" : "";
+}
+
+function renderCards(v) {
+  const E = MODEL.esik, S = MODEL.sabit;
+  for (const pass of [1, 2]) {
+    const html = T.LINES.filter(l => +l[1] === pass).map(l => {
+      const s = v.summ[l], col = "var(" + SLOT[T.UNITS.indexOf(l[3])] + ")";
+      const npfPts = last30(v, l, k => k.npf), dpPts = last30(v, l, k => k.n_st1_pct);
+      const dpSl = C.slope(dpPts.filter(p => ok(p[1])));
+      const sNpf = !ok(s.npf) ? "" : s.npf <= E.npf_cip ? "crit" : s.npf <= E.npf_izle ? "warn" : "";
+      const sDp = !ok(s.n_st1_pct) ? "" : s.n_st1_pct >= E.ndp_cip ? "crit" : s.n_st1_pct >= E.ndp_izle ? "warn" : "";
+      const third = pass === 1
+        ? ["NSP", ok(s.nsp_pct) ? fmtN(s.nsp_pct, 0) + "<small>% ref</small>" : "—", !ok(s.nsp_pct) ? "" : s.nsp_pct >= E.nsp_cip ? "crit" : s.nsp_pct >= E.nsp_izle ? "warn" : ""]
+        : ["Permeat EC", ok(s.ec_p) ? fmtN(s.ec_p, 2) + "<small>µS/cm</small>" : "—", ok(S.p2_ec_max) && ok(s.ec_p) && s.ec_p >= S.p2_ec_max ? "crit" : ""];
+      const why = s.reasons.length ? s.reasons.join(" · ") : (s.st === "na" ? "Son 7 günde yeterli çalışma yok" : "Eşik aşımı yok");
+      return '<div class="lcard" style="view-transition-name:c-' + l + '" data-line="' + l + '" data-st="' + stCls[s.st] + '" tabindex="0" role="button" aria-label="' + l + " " + ST[s.st].txt + ', trendlerde göster"' + (focusLine === l ? ' aria-current="true"' : "") + ">" +
+        '<div class="lc-h"><span class="ln">' + swatch(l) + l + "</span>" + pillHtml(s.st) + "</div>" +
+        '<div class="kpi"><span class="kl">NPF</span><span class="ks">' + spark(npfPts, col, l + " NPF son 30 gün") + '<span class="kt">' + arrow(s.npf_slope, 1, "%") + "</span></span>" +
+          '<span class="kv" data-k="' + l + ':npf" data-st="' + sNpf + '">' + fmtN(s.npf, 1) + "<small>% ref</small></span>" + bullet(s.npf, E) + "</div>" +
+        '<div class="kpi"><span class="kl">Norm St1 dP</span><span class="ks">' + spark(dpPts, col, l + " normalize St1 dP son 30 gün") + '<span class="kt">' + arrow(dpSl == null ? null : dpSl * 30, 0, "%") + "</span></span>" +
+          '<span class="kv" data-k="' + l + ':dp" data-st="' + sDp + '">' + (ok(s.n_st1_pct) ? fmtN(s.n_st1_pct, 0) + "<small>% ref</small>" : "—") + "</span></div>" +
+        '<div class="kpi"><span class="kl">' + third[0] + '</span><span></span><span class="kv" data-k="' + l + ':3" data-st="' + third[2] + '">' + third[1] + "</span></div>" +
+        '<div class="lc-f"><span>Çalışma <b>' + fmtN(s.saat, 1) + "</b> h/gün</span><span>Qp <b>" + fmtN(s.qp, 1) + "</b> m³/h</span><span>R <b>" + fmtN(s.rec, 1) + "</b> %</span></div>" +
+        '<div class="lc-why" data-st="' + stCls[s.st] + '">' + esc(why) + "</div></div>";
+    }).join("");
+    $("cardsP" + pass).innerHTML = html;
+  }
+}
+
+function setFocus(l) {
+  focusLine = l;
+  if (l) {
+    passSel = +l[1];
+    for (const x of $("passSel").querySelectorAll("button")) x.setAttribute("aria-pressed", +x.dataset.p === passSel ? "true" : "false");
+  }
+  const b = $("focusClr"); b.hidden = !l; b.textContent = l ? l + " vurgulu · kaldır" : "";
+  render();
+  if (l) {
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    $("trendSec").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    $("trendH").focus({ preventScroll: true });
+  }
+}
+function lineFromEvent(e) { const el = e.target.closest("[data-line]"); return el ? el.dataset.line : null; }
+for (const id of ["summary", "cardsP1", "cardsP2"]) {
+  $(id).addEventListener("click", e => { const l = lineFromEvent(e); if (l) setFocus(l); });
+  $(id).addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches(".lcard")) { e.preventDefault(); setFocus(e.target.dataset.line); } });
+}
+$("focusClr").addEventListener("click", () => setFocus(null));
+document.addEventListener("click", e => {
+  const b = e.target.closest(".cview"); if (!b) return;
+  const id = b.dataset.chart; if (tblMode.has(id)) tblMode.delete(id); else tblMode.add(id);
+  b.setAttribute("aria-pressed", tblMode.has(id) ? "true" : "false");
+  render();
+});
+try { if (localStorage.getItem("demin_dec_open") === "1") $("decBox").open = true; } catch (_) {}
+$("decBox").addEventListener("toggle", () => { try { localStorage.setItem("demin_dec_open", $("decBox").open ? "1" : "0"); } catch (_) {} });
+
+let renderTimer = null;
+function render() {
+  const v = view();
+  const prev = snapKpi();
+  renderNotice(v); renderSummary(v); renderCards(v); renderPassCharts(v); renderDecision(v); renderTrain(v); renderPlantCharts(v);
+  tweenKpi(prev);
+}
+// Akıcı geçiş: kartlardaki sayılar eski değerden yenisine sayarak oturur; sıralama değişince özet satırları yer değiştirir.
+const calm = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const trNum = t => { const m = /^-?[\d.]+(,\d+)?/.exec(t || ""); return m ? parseFloat(m[0].replace(/\./g, "").replace(",", ".")) : NaN; };
+function snapKpi() {
+  const m = new Map();
+  for (const el of document.querySelectorAll(".kv[data-k]")) { const n = trNum(el.firstChild && el.firstChild.nodeValue); if (isFinite(n)) m.set(el.dataset.k, n); }
+  return m;
+}
+function tweenKpi(prev) {
+  if (calm() || !prev.size) return;
+  const jobs = [];
+  for (const el of document.querySelectorAll(".kv[data-k]")) {
+    const node = el.firstChild, to = trNum(node && node.nodeValue), from = prev.get(el.dataset.k);
+    if (!isFinite(to) || from == null || from === to) continue;
+    const txt = node.nodeValue, dec = (txt.split(",")[1] || "").length;
+    const suffix = txt.replace(/^-?[\d.]+(,\d+)?/, "");
+    jobs.push({ node, from, to, dec, suffix });
+  }
+  if (!jobs.length) return;
+  const t0 = performance.now(), D = 520;
+  (function step(now) {
+    const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 4);
+    for (const j of jobs) j.node.nodeValue = fmtN(j.from + (j.to - j.from) * e, j.dec) + j.suffix;
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+// Kullanıcı eylemiyle (aralık, pass, hat odağı) tetiklenen yenilemeler View Transitions ile akar; destek yoksa anında.
+function renderSmooth() {
+  if (document.startViewTransition && !calm()) { try { document.startViewTransition(render); return; } catch (_) {} }
+  render();
+}
+function scheduleRender() {
+  if (suspend) return;
+  clearTimeout(renderTimer); renderTimer = setTimeout(render, 250);
+}
+
+// ---------- kontroller ----------
+function bindSeg(id, attr, set, store) {
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    set(+b.dataset[attr]);
+    for (const x of $(id).querySelectorAll("button")) x.setAttribute("aria-pressed", x === b ? "true" : "false");
+    try { localStorage.setItem(store, b.dataset[attr]); } catch (_) {}
+    renderSmooth();
+  });
+  try {
+    const r = localStorage.getItem(store);
+    if (r != null) { set(+r); for (const x of $(id).querySelectorAll("button")) x.setAttribute("aria-pressed", x.dataset[attr] === r ? "true" : "false"); }
+  } catch (_) {}
+}
+bindSeg("range", "r", x => range = x, "demin_range");
+bindSeg("passSel", "p", x => passSel = x, "demin_pass");
+
+// ---------- PI Excel okuma ----------
+// Ağır iş (XLSX.read + günlük toplama) bir Web Worker'da çalışır; satırlar worker'da kalır,
+// eşleştirme değişince yeniden toplama da orada yapılır. Worker açılamazsa aynı iş ana iş parçacığında yürür.
+function workerMain() {
+  const Calc = self.DeminCalc;
+  let rows = null, header = null;
+  const OPTS = { type: "array", dense: true, cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false };
+  const sheetRows = ws => !ws ? [] : ws["!data"] || (Array.isArray(ws) ? ws : XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true }));
+  const score = n => /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0;
+  self.onmessage = e => {
+    const { id, cmd } = e.data;
+    const post = (type, data) => self.postMessage(Object.assign({ id, type }, data));
+    try {
+      if (cmd === "ping") return post("ok", { result: true });
+      if (cmd === "read") {
+        // Tek okuma: önce beklenen sayfa; yoksa sayfa listesinden en olası adaylar.
+        let wb = XLSX.read(e.data.buf, Object.assign({ sheets: ["Pass1-2 Data"] }, OPTS));
+        const order = wb.SheetNames.slice().sort((a, b) => score(b) - score(a));
+        let lastErr = null;
+        for (const name of order.slice(0, 6)) {
+          if (!wb.Sheets[name]) { post("prog", { frac: -1, msg: "“" + name + "” sayfası ayrıştırılıyor…" }); wb = XLSX.read(e.data.buf, Object.assign({ sheets: [name] }, OPTS)); }
+          const r = sheetRows(wb.Sheets[name]);
+          try { header = Calc.detectHeader(r); rows = r; return post("ok", { result: { sheet: name, header } }); }
+          catch (err) { lastErr = err; }
+        }
+        throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+      }
+      if (cmd === "agg") {
+        const cols = Calc.resolveColumns(header.cols, e.data.map);
+        const agg = Calc.makeAggregator(cols, e.data.model);
+        const s0 = header.dataStart, N = rows.length;
+        for (let i = s0; i < N; i++) {
+          const row = rows[i]; if (row) agg.add(row);
+          if ((i - s0) % 4000 === 3999) post("prog", { frac: 0.2 + 0.8 * (i - s0) / Math.max(1, N - s0) });
+        }
+        return post("ok", { result: { cols, out: agg.finish() } });
+      }
+    } catch (err) { post("err", { message: (err && err.message) || String(err) }); }
+  };
+}
+
+// Worker kaynağı: kütüphaneler sayfadaki <script data-lib> etiketlerinden (dosya ise importScripts, gömülüyse metni).
+function workerSource() {
+  const parts = [];
+  for (const lib of ["xlsx", "tags", "calc"]) {
+    const el = document.querySelector('script[data-lib="' + lib + '"]');
+    if (!el) throw new Error("kütüphane yok: " + lib);
+    parts.push(el.src ? "importScripts(" + JSON.stringify(el.src) + ");" : el.textContent);
+  }
+  parts.push("(" + workerMain.toString() + ")();");
+  return parts.join("\n;\n");
+}
+function workerParser() {
+  return new Promise((resolve, reject) => {
+    let w, url;
+    try { url = URL.createObjectURL(new Blob([workerSource()], { type: "text/javascript" })); w = new Worker(url); }
+    catch (e) { if (url) URL.revokeObjectURL(url); return reject(e); }
+    let seq = 0; const waiting = new Map();
+    const fail = err => { for (const [, h] of waiting) h.reject(err); waiting.clear(); };
+    w.onmessage = e => {
+      const h = waiting.get(e.data.id); if (!h) return;
+      if (e.data.type === "prog") return h.onProg && h.onProg(e.data.frac, e.data.msg);
+      waiting.delete(e.data.id);
+      e.data.type === "ok" ? h.resolve(e.data.result) : h.reject(new Error(e.data.message));
+    };
+    w.onerror = e => { e.preventDefault(); fail(new Error(e.message || "Ayrıştırıcı başlatılamadı.")); };
+    const call = (msg, onProg, transfer) => new Promise((res, rej) => { const id = ++seq; waiting.set(id, { resolve: res, reject: rej, onProg }); w.postMessage(Object.assign({ id }, msg), transfer || []); });
+    const api = {
+      kind: "worker",
+      async read(file, onProg) {
+        onProg(-1, "Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)");
+        const buf = await file.arrayBuffer();
+        return call({ cmd: "read", buf }, onProg, [buf]);
+      },
+      agg: (map, model, onProg) => call({ cmd: "agg", map, model }, onProg),
+      dispose() { w.terminate(); URL.revokeObjectURL(url); fail(new Error("İptal edildi.")); }
+    };
+    const timer = setTimeout(() => { api.dispose(); reject(new Error("Ayrıştırıcı zamanında açılmadı.")); }, 20000);
+    call({ cmd: "ping" }).then(() => { clearTimeout(timer); resolve(api); }, err => { clearTimeout(timer); api.dispose(); reject(err); });
+  });
+}
+// Yedek yol: worker açılamazsa (eski tarayıcı, kısıtlı ortam) aynı iş ana iş parçacığında, parçalar halinde.
+function mainParser() {
+  let rows = null, header = null, alive = true;
+  const sheetRows = ws => !ws ? [] : ws["!data"] || (Array.isArray(ws) ? ws : XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true }));
+  const score = n => /pass\s*1-?2\s*data/i.test(n) ? 3 : /pass/i.test(n) && /data/i.test(n) ? 2 : /data|pi|canary/i.test(n) ? 1 : 0;
+  const OPTS = { type: "array", dense: true, cellFormula: false, cellHTML: false, cellText: false, cellStyles: false, cellDates: false };
+  return {
+    kind: "main",
+    async read(file, onProg) {
+      if (!window.XLSX) throw new Error("Excel okuyucu yüklenemedi. Sayfayı yenileyip tekrar deneyin.");
+      onProg(-1, "Dosya okunuyor… (" + (file.size / 1048576).toFixed(1) + " MB)");
+      const buf = await file.arrayBuffer();
+      await new Promise(r => setTimeout(r, 30));
+      let wb = XLSX.read(buf, Object.assign({ sheets: ["Pass1-2 Data"] }, OPTS));
+      const order = wb.SheetNames.slice().sort((a, b) => score(b) - score(a));
+      let lastErr = null;
+      for (const name of order.slice(0, 6)) {
+        if (!wb.Sheets[name]) { onProg(-1, "“" + name + "” sayfası ayrıştırılıyor…"); await tick(); wb = XLSX.read(buf, Object.assign({ sheets: [name] }, OPTS)); }
+        const r = sheetRows(wb.Sheets[name]);
+        try { header = C.detectHeader(r); rows = r; return { sheet: name, header }; } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error("Dosyada sayfa bulunamadı.");
+    },
+    async agg(map, model, onProg) {
+      const cols = C.resolveColumns(header.cols, map), agg = C.makeAggregator(cols, model);
+      const s0 = header.dataStart, N = rows.length, CH = 4000;
+      for (let r = s0; r < N; r += CH) {
+        const end = Math.min(N, r + CH);
+        for (let i = r; i < end; i++) { const row = rows[i]; if (row) agg.add(row); }
+        onProg(0.2 + 0.8 * (end - s0) / Math.max(1, N - s0));
+        await tick();
+        if (!alive) throw new Error("İptal edildi.");
+      }
+      return { cols, out: agg.finish() };
+    },
+    dispose() { alive = false; rows = null; }
+  };
+}
+async function makeParser() {
+  try { return await workerParser(); } catch (_) { return mainParser(); }
+}
+
+let progTimer = null;
+function setProg(frac, text) {
+  const box = $("upProgBox"), bar = $("upProg");
+  box.hidden = frac == null;
+  clearInterval(progTimer); progTimer = null;
+  if (frac === -1) {
+    // Süresi bilinmeyen adım (XLSX okuma): kayan çubuk + geçen süre.
+    box.firstElementChild.classList.add("indet"); bar.style.transform = "";
+    const t0 = Date.now(), base = text || "";
+    const tickText = () => { $("upMsg").className = "msg"; $("upMsg").textContent = base + " " + Math.round((Date.now() - t0) / 1000) + " s"; };
+    tickText(); progTimer = setInterval(tickText, 1000);
+    return;
+  }
+  box.firstElementChild.classList.remove("indet");
+  if (frac != null) bar.style.transform = "scaleX(" + Math.max(0, Math.min(1, frac)).toFixed(3) + ")";
+  if (text != null) { $("upMsg").className = "msg"; $("upMsg").textContent = text; }
+}
+function effectiveMap(p) { return Object.assign({}, USERMAP, p.choice); }
+function dropPending() {
+  aggToken++;
+  if (pending && pending.parser) pending.parser.dispose();
+  pending = null; setProg(null);
+}
+
+let aggToken = 0;
+async function runAggregate(p) {
+  const my = ++aggToken;
+  const res = await p.parser.agg(effectiveMap(p), MODEL, f => { if (my === aggToken) setProg(f, "Günlük ortalamalar hesaplanıyor… " + Math.round(Math.max(0, f - 0.2) / 0.8 * 100) + "%"); });
+  if (my !== aggToken) return null;
+  p.cols = res.cols; p.out = res.out;
+  return p;
+}
+
+$("file").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  dropPending();
+  $("upFacts").innerHTML = ""; $("upMatchedBox").hidden = true; $("upUnmatchedBox").hidden = true;
+  $("upSave").disabled = true; $("upSave").textContent = "Kaydet"; $("upCancel").disabled = false;
+  setProg(0, "Dosya okunuyor…");
+  if (!$("upDlg").open) $("upDlg").showModal();
+  try {
+    const parser = await makeParser();
+    const wb = await parser.read(f, (fr, m) => setProg(fr, m));
+    pending = { fileName: f.name, sheet: wb.sheet, header: wb.header, parser, choice: {} };
+    const known = T.builtinIndex();
+    for (const c of pending.header.cols) if (!known[c.norm] && !USERMAP[c.norm]) pending.choice[c.norm] = "ignore";
+    if (!(await runAggregate(pending))) return;
+    showUpload();
+  } catch (err) {
+    dropPending();
+    $("upMsg").textContent = (err && err.message) || "Dosya okunamadı."; $("upMsg").className = "msg err";
+  }
+});
+
+function targetOptions(selected, used) {
+  const tg = T.targets();
+  const groups = [["ACF (tag bekleyen)", k => tg[k].kind === "plant" && tg[k].g === "acf"], ["Katyon/Anyon (tag bekleyen)", k => tg[k].kind === "plant" && tg[k].g === "iy"],
+    ["Tesis parametreleri", k => tg[k].kind === "plant" && tg[k].g !== "acf" && tg[k].g !== "iy"]];
+  for (const l of T.LINES) groups.push([l + " hattı", k => tg[k].kind === "line" && tg[k].line === l]);
+  let h = '<option value="ignore"' + (selected === "ignore" || !selected ? " selected" : "") + ">Yoksay</option>";
+  for (const [g, fn] of groups) {
+    h += '<optgroup label="' + esc(g) + '">';
+    for (const k in tg) if (fn(k)) {
+      const dis = used.has(k) && k !== selected;
+      h += '<option value="' + k + '"' + (k === selected ? " selected" : "") + (dis ? " disabled" : "") + ">" + esc(tg[k].l) + (tg[k].u ? " (" + esc(tg[k].u) + ")" : "") + "</option>";
+    }
+    h += "</optgroup>";
+  }
+  return h;
+}
+
+function showUpload() {
+  const p = pending, o = p.out;
+  setProg(null);
+  const facts = [["Dosya", p.fileName], ["Sayfa", p.sheet], ["Zaman aralığı", fmtStamp(o.firstStamp) + " – " + fmtStamp(o.lastStamp)],
+    ["Satır (dilim)", o.rows.toLocaleString("tr-TR")], ["Adım", fmtN(o.stepMin, 0) + " dk"], ["Gün", o.plantDays.length],
+    ["Kısmi gün", o.partialDays.length ? o.partialDays.map(fmtD).join(", ") : "yok"], ["Tag satırı", (p.header.mode === "path" ? "PI yolundan, satır " : "Satır ") + (p.header.tagRow + 1)]];
+  $("upFacts").innerHTML = facts.map(([l, v]) => '<div class="fact"><div class="fl">' + esc(l) + '</div><div class="fv">' + esc(v) + "</div></div>").join("");
+  const tg = T.targets();
+  const matched = p.cols.filter(c => c.key);
+  const byG = {};
+  for (const c of matched) { const g = T.GROUPS[tg[c.key].g] || tg[c.key].g; byG[g] = (byG[g] || 0) + 1; }
+  $("upMatchedBox").hidden = false;
+  $("upGroups").innerHTML = Object.entries(byG).map(([g, n]) => '<span class="chip">' + esc(g) + ": " + n + " tag</span>").join("") || '<span class="chip miss">Tanınan tag yok</span>';
+  $("upMatched").innerHTML = matched.map(c => '<span class="chip">' + esc(c.tag) + " → " + esc(tg[c.key].l) + "</span>").join("");
+  const have = new Set(matched.map(c => c.key));
+  const miss = Object.keys(tg).filter(k => !have.has(k) && !(tg[k].kind === "plant" && (tg[k].g === "acf" || tg[k].g === "iy")));
+  $("upMissBox").hidden = !miss.length;
+  $("upMissSum").textContent = "Dosyada bulunmayan sözlük parametreleri: " + miss.length;
+  $("upMiss").innerHTML = miss.map(k => '<span class="chip miss">' + esc(tg[k].l) + "</span>").join("");
+
+  const unknown = p.header.cols.filter(c => c.norm in p.choice);
+  $("upUnmatchedBox").hidden = !unknown.length;
+  const used = new Set(p.cols.filter(c => c.key).map(c => c.key));
+  $("upUnmatched").innerHTML = unknown.length ? "<thead><tr><th>Tag</th><th>Açıklama / grup</th><th>Parametre</th></tr></thead><tbody>" + unknown.map(c =>
+    '<tr><td class="tg">' + esc(c.tag) + "</td><td>" + esc([c.desc, c.group].filter(Boolean).join(" · ")) + '</td><td><select id="map_' + esc(c.norm) + '" data-norm="' + esc(c.norm) + '">' +
+    targetOptions(p.choice[c.norm], used) + "</select></td></tr>").join("") + "</tbody>" : "";
+  for (const sel of $("upUnmatched").querySelectorAll("select")) {
+    sel.addEventListener("change", async () => {
+      p.choice[sel.dataset.norm] = sel.value;
+      $("upSave").disabled = true;
+      if (await runAggregate(p)) showUpload();
+    });
+  }
+  const nLine = o.lineDays.length, nPlant = o.plantDays.length;
+  const willStore = !!db && canWrite !== false;
+  $("upSave").textContent = willStore ? "Kaydet (" + nPlant + " gün, " + (nLine + nPlant) + " kayıt)" : "Bu oturumda göster";
+  $("upSave").disabled = !nPlant;
+  $("upMsg").className = nPlant ? "msg" : "msg err";
+  $("upMsg").textContent = nPlant ? (willStore ? "" : (db ? "Kayıt yetkiniz yok; veri yalnız bu oturumda gösterilir." : "Paylaşılan kayıt kullanılamıyor; veri yalnız bu oturumda gösterilir.")) : "Geçerli zaman damgalı satır bulunamadı.";
+}
+
+$("upCancel").addEventListener("click", () => { dropPending(); $("upDlg").close(); });
+$("upDlg").addEventListener("cancel", e => { if ($("upSave").dataset.busy) e.preventDefault(); });   // kayıt sürerken Esc ile kapanmasın
+$("upDlg").addEventListener("close", () => { if (pending && !$("upSave").dataset.busy) dropPending(); });
+
+const r4 = x => ok(x) ? Math.round(x * 1e4) / 1e4 : null;
+function kpiRounded(doc) {
+  const k = C.dayKPI(doc, MODEL); if (!k) return null;
+  const o = {}; for (const f in k) o[f] = r4(k[f]); return o;
+}
+function sameBody(a, b) {
+  if (!a || !b) return false;
+  return JSON.stringify([a.n, a.saat, a.uretim, a.avg, a.pct]) === JSON.stringify([b.n, b.saat, b.uretim, b.avg, b.pct]);
+}
+
+$("upSave").addEventListener("click", async () => {
+  const p = pending; if (!p || !p.out) return;
+  const o = p.out;
+  const btn = $("upSave"), msg = $("upMsg");
+  // SharePoint sürümü: veri klasörü bağlı değilse önce bağlat (tıklamanın içinde).
+  if (window.DeminFile && !(await window.DeminFile.ensureWritable())) {
+    msg.className = "msg err"; msg.textContent = "Kaydetmek için veri klasörünü seçin (SharePoint'teki Demin Water klasörü)."; return;
+  }
+  // Eşleştirme kararları
+  const newMap = Object.assign({}, USERMAP, p.choice);
+  if (!db || canWrite === false) {
+    USERMAP = newMap;
+    localData = localData || { lines: Object.fromEntries(T.LINES.map(l => [l, []])), plant: [] };
+    for (const d of o.lineDays) { const arr = localData.lines[d.hat]; const i = arr.findIndex(x => x.tarih === d.tarih); if (i >= 0) arr[i] = d; else arr.push(d); }
+    for (const d of o.plantDays) { const i = localData.plant.findIndex(x => x.tarih === d.tarih); if (i >= 0) localData.plant[i] = d; else localData.plant.push(d); }
+    localData.plant.sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    for (const l of T.LINES) localData.lines[l].sort((a, b) => a.tarih < b.tarih ? -1 : 1);
+    dropPending(); $("upDlg").close(); render(); return;
+  }
+  btn.disabled = true; $("upCancel").disabled = true; btn.dataset.busy = "1";
+  suspend = true;
+  const upId = "u" + Date.now();
+  const now = new Date().toISOString();
+  let stop = null;
+  const write = async (path, body) => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try { await db.doc(path).set(body); return true; }
+      catch (err) {
+        const code = err && err.code;
+        if (code === "invalid_argument" || code === "not_granted") { stop = "Kayıt yetkiniz yok ya da veri geçersiz. Panelin sahibinden Katkıda bulunan izni isteyin."; return false; }
+        if (code === "quota_exceeded") { stop = "Veri kotası doldu. Eski günlerin silinmesi gerekiyor."; return false; }
+        if (code === "revoked") { stop = "Bu sayfaya erişim değişti. Sayfayı yenileyin."; return false; }
+        await new Promise(r => setTimeout(r, 400 * Math.pow(2, attempt) + Math.random() * 400));
+      }
+    }
+    return false;
+  };
+  try {
+    if (Object.keys(p.choice).length) {
+      if (!(await write("ayarlar/tags", { map: newMap, guncelleme: now }))) throw 0;
+      USERMAP = newMap;
+    }
+    const existing = new Map();
+    for (const [l, arr] of dbLines) for (const d of arr) existing.set("gunluk_hat/" + d.tarih + "_" + l, d);
+    for (const d of dbPlant) existing.set("gunluk_tesis/" + d.tarih, d);
+    const items = [];
+    let skipped = 0;
+    for (const d of o.lineDays) {
+      const path = "gunluk_hat/" + d.tarih + "_" + d.hat;
+      if (sameBody(existing.get(path), d)) { skipped++; continue; }
+      items.push([path, Object.assign({}, d, { kpi: kpiRounded(d), yukleme: upId, guncelleme: now })]);
+    }
+    for (const d of o.plantDays) {
+      const path = "gunluk_tesis/" + d.tarih;
+      if (sameBody(existing.get(path), d)) { skipped++; continue; }
+      items.push([path, Object.assign({}, d, { yukleme: upId, guncelleme: now })]);
+    }
+    let idx = 0, done = 0, failed = 0;
+    const worker = async () => {
+      while (idx < items.length && !stop) {
+        const [path, body] = items[idx++];
+        (await write(path, body)) ? done++ : failed++;
+        setProg(done / Math.max(1, items.length), "Kaydediliyor… " + done + " / " + items.length + (skipped ? " (" + skipped + " kayıt değişmediği için atlandı)" : ""));
+      }
+    };
+    setProg(0, "Kaydediliyor… 0 / " + items.length);
+    await Promise.all([worker(), worker(), worker()]);
+    if (stop || failed) {
+      msg.className = "msg err";
+      msg.textContent = (stop || "Bazı kayıtlar yazılamadı.") + " " + done + " kayıt kaydedildi, " + (items.length - done) + " kayıt kaydedilemedi.";
+      if (stop && stop.startsWith("Kayıt yetkiniz")) canWrite = false;
+      btn.disabled = false; btn.textContent = "Tekrar dene";
+      return;
+    }
+    await write("yuklemeler/" + upId, {
+      dosya: p.fileName, sayfa: p.sheet, ilk: o.firstStamp, son: o.lastStamp, satir: o.rows, adim_dk: o.stepMin,
+      gun: o.plantDays.length, kayit: items.length, atlanan: skipped, kullanici: uid, zaman: now
+    });
+    if (window.DeminFile) { setProg(1, "Veri dosyasına yazılıyor…"); await window.DeminFile.flush(); }
+    dropPending(); $("upDlg").close();
+  } catch (e) {
+    msg.className = "msg err"; msg.textContent = stop || (e && e.message) || "Kaydedilemedi."; btn.disabled = false;
+  } finally {
+    delete btn.dataset.busy; $("upCancel").disabled = false; suspend = false; render();
+  }
+});
+
+// ---------- ayarlar ----------
+function numInput(id, val, label) {
+  return '<input class="num" type="number" step="any" id="' + id + '" value="' + (val == null ? "" : val) + '" aria-label="' + esc(label) + '">';
+}
+const NULLABLE = new Set(["p2_ec_max", "prod_ec_max"]);
+let setMapDraft = {};
+function fillSettings(m) {
+  $("setSabit").innerHTML = T.MODEL_FIELDS.sabit.map(([k, l, u]) => "<label><span>" + esc(l) + (u ? " <small>" + esc(u) + "</small>" : "") + (NULLABLE.has(k) ? " <small>(boş = yok)</small>" : "") + "</span>" + numInput("s_" + k, m.sabit[k], l) + "</label>").join("");
+  $("setEsik").innerHTML = T.MODEL_FIELDS.esik.map(([k, l, u]) => "<label><span>" + esc(l) + (u ? " <small>" + esc(u) + "</small>" : "") + "</span>" + numInput("e_" + k, m.esik[k], l) + "</label>").join("");
+  $("setRef").innerHTML = "<thead><tr><th>Hat</th>" + T.MODEL_FIELDS.ref.map(([, l, u]) => "<th>" + esc(l) + (u ? "<small>" + esc(u) + "</small>" : "") + "</th>").join("") + "</tr></thead><tbody>" +
+    T.LINES.map(line => '<tr><td class="hat">' + line + "</td>" + T.MODEL_FIELDS.ref.map(([k, l]) => "<td>" + numInput("r_" + line + "_" + k, m.ref[line][k], line + " " + l) + "</td>").join("") + "</tr>").join("") + "</tbody>";
+}
+function renderTagMap() {
+  const tg = T.targets();
+  const keys = Object.keys(setMapDraft).sort();
+  if (!keys.length) { $("setTags").innerHTML = '<div class="small">Henüz kullanıcı eşleştirmesi yok. Sözlükte olmayan bir tag yüklendiğinde burada görünür.</div>'; return; }
+  const used = new Set(Object.values(setMapDraft).filter(x => x && x !== "ignore"));
+  $("setTags").innerHTML = '<div style="overflow-x:auto"><table class="map-tbl"><thead><tr><th>Tag</th><th>Parametre</th><th></th></tr></thead><tbody>' +
+    keys.map(n => '<tr><td class="tg">' + esc(n) + '</td><td><select id="tm_' + esc(n) + '" data-norm="' + esc(n) + '">' + targetOptions(setMapDraft[n], used) +
+      '</select></td><td><button type="button" class="btn sm" data-del="' + esc(n) + '">Kaldır</button></td></tr>').join("") + "</tbody></table></div>";
+  for (const sel of $("setTags").querySelectorAll("select")) sel.addEventListener("change", () => { setMapDraft[sel.dataset.norm] = sel.value; renderTagMap(); });
+  for (const b of $("setTags").querySelectorAll("[data-del]")) b.addEventListener("click", () => { delete setMapDraft[b.dataset.del]; renderTagMap(); });
+}
+$("setBtn").addEventListener("click", () => {
+  fillSettings(MODEL);
+  setMapDraft = clone(USERMAP); renderTagMap();
+  $("setMsg").textContent = ""; $("setMsg").className = "msg";
+  $("setSave").textContent = db && canWrite !== false ? "Kaydet" : "Bu oturumda uygula";
+  $("setDlg").showModal();
+});
+$("setCancel").addEventListener("click", () => $("setDlg").close());
+$("setReset").addEventListener("click", () => fillSettings(C.mergeModel(null)));
+$("setSave").addEventListener("click", async () => {
+  const err = t => { $("setMsg").textContent = t; $("setMsg").className = "msg err"; };
+  const read = (id, nullable) => {
+    const s = $(id).value.trim();
+    if (s === "") return nullable ? null : undefined;
+    const x = Number(s.replace(",", "."));
+    return isFinite(x) ? x : undefined;
+  };
+  const next = { sabit: {}, esik: {}, ref: {} };
+  for (const [k, l] of T.MODEL_FIELDS.sabit) { const x = read("s_" + k, NULLABLE.has(k)); if (x === undefined) return err(l + " için bir sayı girin."); next.sabit[k] = x; }
+  for (const [k, l] of T.MODEL_FIELDS.esik) { const x = read("e_" + k); if (x === undefined) return err(l + " için bir sayı girin."); next.esik[k] = x; }
+  for (const line of T.LINES) {
+    next.ref[line] = {};
+    for (const [k, l] of T.MODEL_FIELDS.ref) { const x = read("r_" + line + "_" + k, k === "nsp"); if (x === undefined) return err(line + " " + l + " referansı için bir sayı girin."); next.ref[line][k] = x; }
+  }
+  if (next.esik.npf_cip > next.esik.npf_izle) return err("NPF CIP eşiği İZLE eşiğinden büyük olamaz.");
+  if (next.esik.ndp_cip < next.esik.ndp_izle || next.esik.nsp_cip < next.esik.nsp_izle) return err("CIP eşikleri İZLE eşiklerinden küçük olamaz.");
+  const mapChanged = JSON.stringify(setMapDraft) !== JSON.stringify(USERMAP);
+  if (window.DeminFile && !(await window.DeminFile.ensureWritable())) return err("Kaydetmek için veri klasörünü seçin.");
+  if (db && canWrite !== false) {
+    $("setSave").disabled = true;
+    try {
+      const now = new Date().toISOString();
+      await db.doc("ayarlar/model").set(Object.assign({}, next, { guncelleme: now, kullanici: uid }));
+      if (mapChanged) await db.doc("ayarlar/tags").set({ map: setMapDraft, guncelleme: now });
+      if (window.DeminFile) await window.DeminFile.flush();
+    } catch (e) { $("setSave").disabled = false; return err("Kaydedilemedi: ayarları değiştirme yetkiniz olmayabilir."); }
+    $("setSave").disabled = false;
+  }
+  MODEL = C.mergeModel(next);
+  USERMAP = clone(setMapDraft);
+  if (localData == null && source().kind === "sample") SAMPLE = null;
+  $("setDlg").close(); render();
+});
+
+// ---------- tema ----------
+const rerender = () => { $("passCharts").dataset.sig = ""; $("plantCharts").dataset.sig = ""; render(); };
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender); } catch (_) {}
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+// ---------- açılış ----------
+render();
+
+(async () => {
+  const c = window.claude;
+  if (!c || !c.use) { dbReady = true; render(); return; }
+  const [dbNs, u, dlNs] = await Promise.all([c.use("db"), c.use("user"), c.use("downloads")]);
+  dl = dlNs; userNs = u;
+  if (u) {
+    try { canWrite = await u.can("data.write"); } catch (_) { canWrite = null; }
+    try { uid = await u.id(); } catch (_) { uid = null; }
+  }
+  db = dbNs;
+  if (!db) { dbReady = true; render(); return; }
+  let waiting = T.LINES.length + 1;
+  const arrived = () => { if (waiting > 0 && --waiting === 0) { dbReady = true; } scheduleRender(); };
+  db.doc("ayarlar/model").onSnapshot(s => { MODEL = C.mergeModel(s.exists ? s.data() : null); SAMPLE = null; scheduleRender(); }, () => {});
+  db.doc("ayarlar/tags").onSnapshot(s => { const d = s.exists ? s.data() : null; USERMAP = d && d.map && typeof d.map === "object" ? Object.assign({}, d.map) : {}; }, () => {});
+  for (const line of T.LINES) {
+    let first = true;
+    db.collection("gunluk_hat").where("hat", "==", line).orderBy("tarih", "desc").limit(1000).onSnapshot(snap => {
+      dbLines.set(line, snap.docs.map(d => d.data()).filter(d => d && typeof d.tarih === "string" && d.avg).reverse());
+      if (first) { first = false; arrived(); } else scheduleRender();
+    }, () => { if (first) { first = false; arrived(); } });
+  }
+  {
+    let first = true;
+    db.collection("gunluk_tesis").orderBy("tarih", "desc").limit(1000).onSnapshot(snap => {
+      dbPlant = snap.docs.map(d => d.data()).filter(d => d && typeof d.tarih === "string").reverse();
+      if (first) { first = false; arrived(); } else scheduleRender();
+    }, () => { if (first) { first = false; arrived(); } });
+  }
+  db.collection("yuklemeler").orderBy("zaman", "desc").limit(1).onSnapshot(snap => {
+    lastUpload = snap.docs.length ? snap.docs[0].data() : null; scheduleRender();
+  }, () => {});
+})();
+})();
+</script>
